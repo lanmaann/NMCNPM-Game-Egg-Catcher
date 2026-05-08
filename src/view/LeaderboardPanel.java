@@ -48,14 +48,30 @@ public class LeaderboardPanel extends JPanel {
 
         List<Record> list = RecordManager.loadAll();
 
-        for (int i = 0; i < Math.min(3, list.size()); i++) {
+        if (list.isEmpty()) {
 
-            Record r = list.get(i);
-            int rank = i + 1;
+            JLabel empty = new JLabel("NO RECORD YET!", SwingConstants.CENTER);
 
-            JPanel row = createRow(rank, r);
-            listPanel.add(row);
-            listPanel.add(Box.createVerticalStrut(8));
+            empty.setForeground(new Color(255, 215, 0));
+            empty.setFont(new Font("Arial", Font.BOLD, 24));
+
+            empty.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+            listPanel.add(Box.createVerticalStrut(80));
+            listPanel.add(empty);
+
+        } else {
+
+            for (int i = 0; i < Math.min(3, list.size()); i++) {
+
+                Record r = list.get(i);
+                int rank = i + 1;
+
+                JPanel row = createRow(rank, r);
+
+                listPanel.add(row);
+                listPanel.add(Box.createVerticalStrut(8));
+            }
         }
 
         JScrollPane scroll = new JScrollPane(listPanel);

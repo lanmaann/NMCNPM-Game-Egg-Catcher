@@ -14,15 +14,30 @@ public class LeaderboardPanel extends JPanel {
         setLayout(new BorderLayout());
         setBackground(new Color(20, 25, 45));
 
-        // =========================
-        // TOP TITLE
-        // =========================
-        JLabel title = new JLabel("TOP 10 LEADERBOARD", SwingConstants.CENTER);
-        title.setForeground(Color.WHITE);
-        title.setFont(new Font("Arial", Font.BOLD, 26));
-        title.setBorder(BorderFactory.createEmptyBorder(20, 10, 10, 10));
+     // =========================
+     // HEADER (nút BACK + TITLE)
+     // =========================
+     JButton back = new JButton("BACK");
+     back.setFocusPainted(false);
+     back.setFont(new Font("Arial", Font.BOLD, 14));
+     back.setBackground(new Color(230, 230, 230));
+     back.setPreferredSize(new Dimension(90, 35));
 
-        add(title, BorderLayout.NORTH);
+     back.addActionListener(e -> onBack.run());
+
+     JLabel title = new JLabel("TOP 3 LEADERBOARD", SwingConstants.CENTER);
+     title.setForeground(Color.WHITE);
+     title.setFont(new Font("Arial", Font.BOLD, 26));
+
+     JPanel header = new JPanel(new BorderLayout());
+
+     header.setBackground(new Color(20, 25, 45));
+     header.setBorder(BorderFactory.createEmptyBorder(15, 10, 10, 10));
+
+     header.add(back, BorderLayout.WEST);
+     header.add(title, BorderLayout.CENTER);
+
+     add(header, BorderLayout.NORTH);
 
         // =========================
         // CENTER LIST (SCROLL)
@@ -33,7 +48,7 @@ public class LeaderboardPanel extends JPanel {
 
         List<Record> list = RecordManager.loadAll();
 
-        for (int i = 0; i < Math.min(10, list.size()); i++) {
+        for (int i = 0; i < Math.min(3, list.size()); i++) {
 
             Record r = list.get(i);
             int rank = i + 1;
@@ -50,22 +65,7 @@ public class LeaderboardPanel extends JPanel {
 
         add(scroll, BorderLayout.CENTER);
 
-        // =========================
-        // BACK BUTTON
-        // =========================
-        JButton back = new JButton("BACK");
-        back.setFocusPainted(false);
-        back.setFont(new Font("Arial", Font.BOLD, 14));
-        back.setBackground(new Color(230, 230, 230));
-
-        back.addActionListener(e -> onBack.run());
-
-        JPanel bottom = new JPanel();
-        bottom.setBackground(new Color(20, 25, 45));
-        bottom.setBorder(BorderFactory.createEmptyBorder(15, 0, 20, 0));
-        bottom.add(back);
-
-        add(bottom, BorderLayout.SOUTH);
+      
     }
 
     // =========================

@@ -8,6 +8,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import util.ImageLoader;
+import java.util.List;
 
 public class GameView extends JPanel {
 
@@ -257,9 +258,12 @@ public class GameView extends JPanel {
         int time = model.getTimeSurvived();
         String mmss = String.format("%02d:%02d", time / 60, time % 60);
 
+        Record best = RecordManager.getBestRecord();
+
         g2.drawString("Score: " + model.getScore(), 20, 35);
-        g2.drawString("Lives: " + model.getLives(), 150, 35);
-        g2.drawString("Time: " + mmss, 280, 35);
+        g2.drawString("Best: " + best.getScore(), 120, 35); //thêm bestscore lúc đang chơi
+        g2.drawString("Lives: " + model.getLives(), 240, 35);
+        g2.drawString("Time: " + mmss, 360, 35);
     }
 
     // =========================================================
@@ -308,29 +312,83 @@ public class GameView extends JPanel {
         int w = getWidth();
         int h = getHeight();
 
+        // nền tối
         g2.setColor(new Color(0, 0, 0, 170));
         g2.fillRect(0, 0, w, h);
 
         int bw = (int)(w * 0.75);
-        int bh = (int)(h * 0.7);
+        int bh = (int)(h * 0.78);
 
         int x = (w - bw) / 2;
         int y = (h - bh) / 2;
 
+        // card trắng
         g2.setColor(Color.WHITE);
         g2.fillRoundRect(x, y, bw, bh, 25, 25);
 
-        g2.setColor(Color.BLACK);
-        g2.setFont(new Font("Arial", Font.BOLD, 22));
-        g2.drawString("GAME OVER", x + 40, y + 40);
-
+        // =========================
+        // QUẢNG CÁO
+        // =========================
         if (gameOverAd != null) {
-            g2.drawImage(gameOverAd, x + 30, y + 70, bw - 60, 120, null);
+
+            g2.drawImage(
+                    gameOverAd,
+                    x + 30,
+                    y + 25,
+                    bw - 60,
+                    120,
+                    null
+            );
         }
 
-        recordBtn = new Rectangle(x + 40, y + 220, bw - 80, 40);
-        replayBtn = new Rectangle(x + 40, y + 270, bw - 80, 40);
-        homeBtn = new Rectangle(x + 40, y + 320, bw - 80, 40);
+        // =========================
+        // GAME OVER
+        // =========================
+        g2.setColor(Color.BLACK);
+        g2.setFont(new Font("Arial", Font.BOLD, 24));
+
+        String title = "GAME OVER!";
+
+        FontMetrics fmTitle = g2.getFontMetrics();
+
+        int titleX =
+                x + (bw - fmTitle.stringWidth(title)) / 2;
+
+        g2.drawString(title, titleX, y + 185);
+
+        // =========================
+        // SCORE / HIGH SCORE
+        // =========================
+        int currentScore = model.getScore();
+
+        boolean isHighScore =
+                currentScore >= RecordManager.getHighScore();
+
+        g2.setFont(new Font("Arial", Font.BOLD, 20));
+
+        String scoreText;
+
+        if (isHighScore) {
+            g2.setColor(new Color(255, 140, 0));
+            scoreText = "NEW HIGH SCORE: " + currentScore;
+        } else {
+            g2.setColor(Color.BLACK);
+            scoreText = "SCORE: " + currentScore;
+        }
+
+        FontMetrics fmScore = g2.getFontMetrics();
+
+        int scoreX =
+                x + (bw - fmScore.stringWidth(scoreText)) / 2;
+
+        g2.drawString(scoreText, scoreX, y + 230);
+
+        // =========================
+        // BUTTONS
+        // =========================
+        recordBtn = new Rectangle(x + 40, y + 300, bw - 80, 40);
+        replayBtn = new Rectangle(x + 40, y + 350, bw - 80, 40);
+        homeBtn = new Rectangle(x + 40, y + 400, bw - 80, 40);
 
         drawButton(g2, recordBtn, "RECORDS");
         drawButton(g2, replayBtn, "PLAY AGAIN");

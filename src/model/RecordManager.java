@@ -99,4 +99,7 @@ public class RecordManager {
                 .max(Comparator.comparingInt(Record::getScore))
                 .orElse(new Record(0, 0));
     }
+    public static int getHighScore() {
+        return getBestRecord().getScore();
+    }
 }

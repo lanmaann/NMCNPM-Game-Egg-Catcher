@@ -84,6 +84,7 @@ public class RecordManager {
             e.printStackTrace();
         }
 
+        // 1.4.3. Hệ thống sắp xếp danh sách điểm số theo thứ tự giảm dần.
         list.sort((a, b) -> b.getScore() - a.getScore());
 
         return list;

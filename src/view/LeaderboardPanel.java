@@ -23,6 +23,7 @@ public class LeaderboardPanel extends JPanel {
      back.setBackground(new Color(230, 230, 230));
      back.setPreferredSize(new Dimension(90, 35));
 
+  // 1.4.5. Người chơi nhấn nút quay lại để quay lại màn hình bắt đầu game.
      back.addActionListener(e -> onBack.run());
 
      JLabel title = new JLabel("TOP 3 LEADERBOARD", SwingConstants.CENTER);
@@ -46,10 +47,13 @@ public class LeaderboardPanel extends JPanel {
         listPanel.setLayout(new BoxLayout(listPanel, BoxLayout.Y_AXIS));
         listPanel.setBackground(new Color(20, 25, 45));
 
+        //1.4.2. Hệ thống gửi yêu cầu truy xuất dữ liệu đến lớp quản lý dữ liệu (RecordManager ) và đọc tệp tin lưu trữ.
+
         List<Record> list = RecordManager.loadAll();
 
         if (list.isEmpty()) {
 
+        	//ALT: 1.4.2a.2. Hệ thống hiển thị thông báo "No Record Yet"
             JLabel empty = new JLabel("NO RECORD YET!", SwingConstants.CENTER);
 
             empty.setForeground(new Color(255, 215, 0));
@@ -62,6 +66,7 @@ public class LeaderboardPanel extends JPanel {
 
         } else {
 
+        	// 1.4.4. Hệ thống hiển thị danh sách Top 3 điểm số lên một màn hình mới.
             for (int i = 0; i < Math.min(3, list.size()); i++) {
 
                 Record r = list.get(i);

@@ -131,8 +131,6 @@ public class GameController {
 
         model.reset();
 
-        SoundManager.playRestart();
-
         initInput();
         start();
     }

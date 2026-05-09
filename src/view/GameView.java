@@ -25,12 +25,15 @@ public class GameView extends JPanel {
     private Rectangle recordBtn = new Rectangle();
     private Rectangle homeBtn = new Rectangle();
     private Rectangle replayBtn = new Rectangle();
-    private Rectangle restartBtn = new Rectangle();
+   
     // =========================
     // PAUSE SCREEN BUTTONS
     // =========================
     private Rectangle resumeBtn = new Rectangle();
+    private Rectangle restartBtn = new Rectangle();
     private Rectangle homePauseBtn = new Rectangle();
+    private Rectangle soundBtn = new Rectangle();
+    private Rectangle musicBtn = new Rectangle();
 
     // =========================
     // STATE
@@ -69,22 +72,38 @@ public class GameView extends JPanel {
                 // ================= TOP BUTTONS =================
                 if (pauseBtn.contains(p)) {
                     model.togglePause();
-                    SoundManager.stopMusic();; 
+
+                    if (SoundManager.SOUND_ON) {
+                        SoundManager.playUI();
+                    }
+
+                    if (model.isPaused()) {
+                        SoundManager.stopMusic();
+                    } else {
+                        SoundManager.playMusic("/resources/music/bgm.wav");
+                    }
+
                     return;
                 }
-
 
                 // ================= PAUSE SCREEN =================
                 if (model.isPaused()) {
 
                     if (resumeBtn.contains(p)) {
                         model.togglePause();
-                        SoundManager.playBackgroundMusic("/resources/music/bgm.wav");
+
+                        if (SoundManager.MUSIC_ON) {
+                            SoundManager.playMusic("/resources/music/bgm.wav");
+                        }
                         return;
                     }
+
                     if (restartBtn.contains(p)) {
                         model.reset();
-                        SoundManager.playBackgroundMusic("/resources/music/bgm.wav");
+
+                        if (SoundManager.MUSIC_ON) {
+                            SoundManager.playMusic("/resources/music/bgm.wav");
+                        }
                         return;
                     }
 
@@ -92,11 +111,38 @@ public class GameView extends JPanel {
                         if (onHome != null) onHome.run();
                         return;
                     }
-                    
+
+                    // =========================
+                    // SOUND TOGGLE
+                    // =========================
+                    if (soundBtn.contains(p)) {
+                        SoundManager.SOUND_ON = !SoundManager.SOUND_ON;
+
+                        if (!SoundManager.SOUND_ON) {
+                            // không cần stop music ở đây (chỉ SFX)
+                        }
+
+                        return;
+                    }
+
+                    // =========================
+                    // MUSIC TOGGLE
+                    // =========================
+                    if (musicBtn.contains(p)) {
+                        SoundManager.MUSIC_ON = !SoundManager.MUSIC_ON;
+
+                        if (!SoundManager.MUSIC_ON) {
+                            SoundManager.stopMusic();
+                        } else {
+                            SoundManager.playMusic("/resources/music/bgm.wav");
+                        }
+
+                        return;
+                    }
+
                     model.togglePause();
                     return;
                 }
-
                 // ================= GAME OVER =================
                 if (model.isGameOver()) {
 
@@ -106,13 +152,19 @@ public class GameView extends JPanel {
                     }
                     if (replayBtn.contains(p)) {
                         model.reset();
-                        SoundManager.playRestart();
+
+                        if (SoundManager.MUSIC_ON) {
+                            SoundManager.playMusic("/resources/music/bgm.wav");
+                        }
+
                         return;
                     }
-
                     if (homeBtn.contains(p) && onHome != null) {
                         onHome.run();
                        
+                    }
+                    if (recordBtn.contains(p) && onRecords != null) {
+                        onRecords.run();
                     }
                 }
             }
@@ -277,10 +329,18 @@ public class GameView extends JPanel {
         resumeBtn = new Rectangle(x + 20, y + 60, btnW, btnH);
         restartBtn = new Rectangle(x + 20, y + 60 + (btnH + gap), btnW, btnH);
         homePauseBtn = new Rectangle(x + 20, y + 60 + (btnH + gap) * 2, btnW, btnH);
+        soundBtn = new Rectangle(x + 20, y + 60 + (btnH + gap) * 3, btnW, btnH);
+        musicBtn = new Rectangle(x + 20, y + 60 + (btnH + gap) * 4, btnW, btnH);
+
 
         drawButton(g2, resumeBtn, "RESUME");
         drawButton(g2, restartBtn, "RESTART");
         drawButton(g2, homePauseBtn, "HOME");
+        drawButton(g2, soundBtn,
+                "SOUND: " + (SoundManager.SOUND_ON ? "ON" : "OFF"));
+
+        drawButton(g2, musicBtn,
+                "MUSIC: " + (SoundManager.MUSIC_ON ? "ON" : "OFF"));
     }
 
     // =========================================================

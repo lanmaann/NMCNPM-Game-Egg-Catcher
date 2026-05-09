@@ -106,7 +106,7 @@ public class GameView extends JPanel {
                     }
                     if (replayBtn.contains(p)) {
                         model.reset();
-                        SoundManager.playRestart();
+                        SoundManager.playBackgroundMusic("/resources/music/bgm.wav");
                         return;
                     }
 

@@ -1,36 +1,30 @@
 package view;
 
+import util.SoundManager;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 
-import util.SoundManager;
-
 /**
- * =========================================================
- * MAIN MENU PANEL
- * =========================================================
- * giao diện menu chính của game
+ * Lớp giao diện menu chính của trò chơi Egg Catcher.
  * 
- * chức năng:
- * - hiển thị title game
- * - hiển thị nút start
- * - hiển thị leaderboard
- * - thoát game
- * - bật/tắt âm thanh
- * =========================================================
+ * Chức năng:
+ * - Hiển thị tiêu đề game
+ * - Hiển thị các nút chức năng
+ * - Mở bảng xếp hạng
+ * - Bật/tắt âm thanh
+ * - Hiển thị hướng dẫn chơi
+ * - Vẽ background giao diện
  */
 public class MainMenuPanel extends JPanel {
 
-    // =========================================================
-    // GLOBAL SOUND STATE
-    // =========================================================
-
-    // trạng thái âm thanh toàn cục
-    public static boolean SOUND_ON = true;
-
     /**
-     * constructor khởi tạo menu chính
+     * Constructor khởi tạo menu chính.
+     * 
+     * @param onStart callback bắt đầu game
+     * @param onLeaderboard callback mở leaderboard
+     * @param onExit callback thoát game
      */
     public MainMenuPanel(
             Runnable onStart,
@@ -38,242 +32,398 @@ public class MainMenuPanel extends JPanel {
             Runnable onExit
     ) {
 
-        // layout chính
+        // Layout chính
         setLayout(new GridBagLayout());
 
-        // màu nền
+        // Màu nền panel
         setBackground(new Color(245, 248, 255));
 
-        GridBagConstraints gbc = new GridBagConstraints();
+        GridBagConstraints gbc =
+                new GridBagConstraints();
 
         gbc.gridx = 0;
 
-        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.fill =
+                GridBagConstraints.HORIZONTAL;
 
-        gbc.insets = new Insets(10, 0, 10, 0);
+        gbc.insets =
+                new Insets(10, 0, 10, 0);
 
-        // =========================================================
-        // CARD
-        // =========================================================
-
+        /**
+         * Card chứa toàn bộ menu.
+         */
         JPanel card = new JPanel();
 
-        card.setPreferredSize(new Dimension(260, 360));
+        card.setPreferredSize(
+                new Dimension(280, 420)
+        );
 
-        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+        card.setLayout(
+                new BoxLayout(
+                        card,
+                        BoxLayout.Y_AXIS
+                )
+        );
 
-        // cho phép thấy background
+        // Cho phép hiển thị background
         card.setOpaque(false);
 
-        // =========================================================
-        // TITLE
-        // =========================================================
-
+        /**
+         * Tiêu đề game.
+         */
         JLabel title =
                 new JLabel(
                         "EGG CATCHER",
                         SwingConstants.CENTER
                 );
 
-        title.setAlignmentX(Component.CENTER_ALIGNMENT);
+        title.setAlignmentX(
+                Component.CENTER_ALIGNMENT
+        );
 
-        title.setFont(new Font("Arial", Font.BOLD, 24));
-
+        title.setFont(
+                new Font(
+                        "Arial",
+                        Font.BOLD,
+                        28
+                )
+        );
 
         title.setBorder(
                 BorderFactory.createEmptyBorder(
-                        10,
-                        10,
                         20,
+                        10,
+                        30,
                         10
                 )
         );
 
-        // =========================================================
-        // MAIN BUTTONS
-        // =========================================================
-
-        // nút start game
-        JButton start =
-                createButton("START", onStart);
-
-        // nút leaderboard
-        JButton leaderboard =
-                createButton("LEADERBOARD", onLeaderboard);
-
-        // nút exit
-        JButton exit =
-                createButton("EXIT", onExit);
-
-        // =========================================================
-        // SOUND SETTING BUTTON
-        // =========================================================
-
-        JButton setting =
-                new JButton(getSoundText());
-
-        // =========================
-        // BUTTONS
-        // =========================
-        JButton start = createButton("START", onStart);
-        
-    	//1.4.1. Người chơi chọn chức năng xem điểm số trên giao diện.(khi ở màn hình bắt đầu game)
-        JButton leaderboard = createButton("LEADERBOARD", onLeaderboard);
-        JButton exit = createButton("EXIT", onExit);
-
-
-        setting.setFont(new Font("Arial", Font.BOLD, 12));
-
-        setting.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        setting.setMaximumSize(new Dimension(200, 35));
-
-        // =========================================================
-        // SOUND TOGGLE EVENT
-        // =========================================================
-
-        setting.addActionListener((ActionEvent e) -> {
-
-            // đổi trạng thái âm thanh
-            SOUND_ON = !SOUND_ON;
-
-            // cập nhật text
-            setting.setText(getSoundText());
-
-            // =========================================================
-            // SOUND OFF
-            // =========================================================
-
-            if (!SOUND_ON) {
-
-                SoundManager.stop(null);
-            }
-
-            // =========================================================
-            // SOUND ON
-            // =========================================================
-
-            else {
-
-                SoundManager.play(
-                        "/resources/sound/click.wav"
+        /**
+         * Nút bắt đầu game.
+         */
+        JButton startBtn =
+                createButton(
+                        "START",
+                        onStart
                 );
-            }
-        });
 
-        // =========================================================
-        // ADD COMPONENTS
-        // =========================================================
+        /**
+         * Người chơi chọn chức năng xem bảng điểm
+         * ở màn hình chính.
+         */
+        JButton leaderboardBtn =
+                createButton(
+                        "LEADERBOARD",
+                        onLeaderboard
+                );
 
+        /**
+         * Nút cài đặt âm thanh và hướng dẫn.
+         */
+        JButton settingBtn =
+                createSettingButton();
+
+        /**
+         * Nút thoát game.
+         */
+        JButton exitBtn =
+                createButton(
+                        "EXIT",
+                        onExit
+                );
+
+        // Thêm component vào card
         card.add(title);
 
-        card.add(start);
+        card.add(startBtn);
 
-        card.add(Box.createVerticalStrut(10));
+        card.add(Box.createVerticalStrut(12));
 
-        card.add(leaderboard);
+        card.add(leaderboardBtn);
 
-        card.add(Box.createVerticalStrut(10));
+        card.add(Box.createVerticalStrut(12));
 
-        card.add(exit);
+        card.add(settingBtn);
 
-        card.add(Box.createVerticalStrut(15));
+        card.add(Box.createVerticalStrut(12));
 
-        card.add(setting);
+        card.add(exitBtn);
 
+        // Thêm card vào panel
         add(card, gbc);
     }
 
-    // =========================================================
-    // SOUND TEXT
-    // =========================================================
-
     /**
-     * lấy text trạng thái âm thanh
-     */
-    private String getSoundText() {
-
-        return SOUND_ON
-                ? "🔊 SOUND: ON"
-                : "🔇 SOUND: OFF";
-    }
-
-    // =========================================================
-    // CREATE BUTTON
-    // =========================================================
-
-    /**
-     * tạo button chuẩn giao diện
+     * Tạo button giao diện chuẩn.
+     * 
+     * @param text nội dung button
+     * @param action hành động khi nhấn
+     * @return JButton đã thiết kế
      */
     private JButton createButton(
             String text,
             Runnable action
     ) {
 
-        JButton btn = new JButton(text);
+        JButton btn =
+                new JButton(text);
 
         btn.setFocusPainted(false);
 
-        btn.setFont(new Font("Arial", Font.BOLD, 14));
+        btn.setFont(
+                new Font(
+                        "Arial",
+                        Font.BOLD,
+                        15
+                )
+        );
 
-        btn.setAlignmentX(Component.CENTER_ALIGNMENT);
+        btn.setAlignmentX(
+                Component.CENTER_ALIGNMENT
+        );
 
-        btn.setMaximumSize(new Dimension(200, 40));
+        btn.setMaximumSize(
+                new Dimension(220, 42)
+        );
 
-        btn.setBackground(new Color(230, 230, 230));
+        btn.setBackground(
+                new Color(230, 230, 230)
+        );
 
-        // =========================================================
-        // BUTTON EVENT
-        // =========================================================
+        btn.setCursor(
+                new Cursor(Cursor.HAND_CURSOR)
+        );
 
+        /**
+         * Xử lý sự kiện click button.
+         */
         btn.addActionListener(e -> {
 
-            // chạy action
+            // Thực hiện callback
             if (action != null) {
 
                 action.run();
             }
 
-            // phát âm thanh click
-            if (SOUND_ON) {
+            // Phát âm thanh click
+            if (SoundManager.SOUND_ON) {
 
-                SoundManager.play(
-                        "/resources/sound/click.wav"
-                );
+                SoundManager.playUI();
             }
         });
 
         return btn;
     }
 
-    // =========================================================
-    // BACKGROUND
-    // =========================================================
+    /**
+     * Tạo nút Settings.
+     * 
+     * Chức năng:
+     * - Bật/tắt nhạc nền
+     * - Bật/tắt hiệu ứng âm thanh
+     * - Hiển thị hướng dẫn chơi
+     * 
+     * @return JButton Settings
+     */
+    private JButton createSettingButton() {
+
+        JButton btn =
+                new JButton("SETTINGS");
+
+        btn.setFocusPainted(false);
+
+        btn.setFont(
+                new Font(
+                        "Arial",
+                        Font.BOLD,
+                        14
+                )
+        );
+
+        btn.setAlignmentX(
+                Component.CENTER_ALIGNMENT
+        );
+
+        btn.setMaximumSize(
+                new Dimension(220, 40)
+        );
+
+        btn.setBackground(
+                new Color(220, 220, 220)
+        );
+
+        btn.setCursor(
+                new Cursor(Cursor.HAND_CURSOR)
+        );
+
+        /**
+         * Xử lý mở cửa sổ Settings.
+         */
+        btn.addActionListener((ActionEvent e) -> {
+
+            /**
+             * Checkbox bật/tắt nhạc nền.
+             */
+            JCheckBox bgm =
+                    new JCheckBox(
+                            "Background Music",
+                            SoundManager.MUSIC_ON
+                    );
+
+            /**
+             * Checkbox bật/tắt hiệu ứng âm thanh.
+             */
+            JCheckBox sfx =
+                    new JCheckBox(
+                            "Sound Effects",
+                            SoundManager.SOUND_ON
+                    );
+
+            /**
+             * Text hướng dẫn chơi game.
+             */
+            JTextArea guide =
+                    new JTextArea(
+                            """
+                            HOW TO PLAY
+
+                            ← → : Move
+
+                            Catch normal eggs
+                            Avoid bombs
+                            Golden egg = bonus points
+
+                            P : Pause
+                            R : Restart
+                            """
+                    );
+
+            guide.setEditable(false);
+
+            guide.setFont(
+                    new Font(
+                            "Arial",
+                            Font.PLAIN,
+                            13
+                    )
+            );
+
+            guide.setBackground(
+                    new Color(245, 245, 245)
+            );
+
+            /**
+             * Panel chứa nội dung settings.
+             */
+            JPanel panel =
+                    new JPanel();
+
+            panel.setLayout(
+                    new BoxLayout(
+                            panel,
+                            BoxLayout.Y_AXIS
+                    )
+            );
+
+            panel.add(bgm);
+
+            panel.add(Box.createVerticalStrut(10));
+
+            panel.add(sfx);
+
+            panel.add(Box.createVerticalStrut(15));
+
+            panel.add(
+                    new JLabel("Guide:")
+            );
+
+            panel.add(Box.createVerticalStrut(5));
+
+            panel.add(
+                    new JScrollPane(guide)
+            );
+
+            /**
+             * Hiển thị dialog settings.
+             */
+            int result =
+                    JOptionPane.showConfirmDialog(
+                            null,
+                            panel,
+                            "Settings",
+                            JOptionPane.OK_CANCEL_OPTION,
+                            JOptionPane.PLAIN_MESSAGE
+                    );
+
+            /**
+             * Lưu thay đổi cài đặt.
+             */
+            if (result == JOptionPane.OK_OPTION) {
+
+                SoundManager.MUSIC_ON =
+                        bgm.isSelected();
+
+                SoundManager.SOUND_ON =
+                        sfx.isSelected();
+
+                // Dừng nhạc nếu tắt BGM
+                if (!SoundManager.MUSIC_ON) {
+
+                    SoundManager.stopMusic();
+                }
+            }
+        });
+
+        return btn;
+    }
 
     /**
-     * vẽ background gradient
+     * Vẽ background gradient cho menu.
+     * 
+     * @param g đối tượng Graphics
      */
     @Override
     protected void paintComponent(Graphics g) {
 
         super.paintComponent(g);
 
-        Graphics2D g2 = (Graphics2D) g;
+        Graphics2D g2 =
+                (Graphics2D) g;
 
         int w = getWidth();
 
         int h = getHeight();
 
-        // gradient background
-        g2.setPaint(new GradientPaint(
-                0,
-                0,
-                new Color(245, 248, 255),
-                0,
-                h,
-                new Color(190, 210, 255)
-        ));
+        /**
+         * Background gradient.
+         */
+        g2.setPaint(
+                new GradientPaint(
+                        0,
+                        0,
+                        new Color(245, 248, 255),
+                        0,
+                        h,
+                        new Color(190, 210, 255)
+                )
+        );
 
         g2.fillRect(0, 0, w, h);
+
+        /**
+         * Trang trí background.
+         */
+        g2.setColor(
+                new Color(255, 255, 255, 70)
+        );
+
+        g2.fillOval(-80, -80, 200, 200);
+
+        g2.fillOval(
+                w - 150,
+                h - 150,
+                220,
+                220
+        );
     }
 }

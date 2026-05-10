@@ -4,89 +4,114 @@ import java.awt.*;
 import util.ImageLoader;
 
 /**
- * =========================================================
- * BOMB OBJECT
- * =========================================================
- * lớp đại diện cho bom trong game
+ * Lớp đại diện cho Bomb trong trò chơi.
  * 
- * chức năng:
- * - hiển thị bom rơi
- * - phát animation nổ
- * - xử lý khi bom bị hứng hoặc rơi
- * =========================================================
+ * Chức năng:
+ * - Hiển thị bom rơi xuống
+ * - Phát animation bom nổ
+ * - Xử lý khi bom bị hứng hoặc rơi
+ * - Kết thúc object sau animation
  */
 public class Bomb extends FallingObject {
 
-    // danh sách frame animation bom
+    /**
+     * Danh sách frame animation bom.
+     */
     private Image[] frames;
 
-    // animation bom nổ
+    /**
+     * Animation bom nổ.
+     */
     private SpriteAnimation anim;
 
     /**
-     * constructor khởi tạo bom theo lane
+     * Constructor khởi tạo Bomb theo lane.
+     * 
+     * @param lane lane xuất hiện
      */
     public Bomb(int lane) {
 
         super(lane);
 
-        // load các frame animation
+        /**
+         * Load các frame animation.
+         */
         frames = new Image[]{
-                ImageLoader.load("/resources/images/bomb1.png"),
-                ImageLoader.load("/resources/images/bomb2.png"),
-                ImageLoader.load("/resources/images/bomb3.png"),
-                ImageLoader.load("/resources/images/bomb4.png"),
-                ImageLoader.load("/resources/images/bomb5.png")
+
+                ImageLoader.load(
+                        "/resources/images/bomb1.png"
+                ),
+
+                ImageLoader.load(
+                        "/resources/images/bomb2.png"
+                ),
+
+                ImageLoader.load(
+                        "/resources/images/bomb3.png"
+                ),
+
+                ImageLoader.load(
+                        "/resources/images/bomb4.png"
+                ),
+
+                ImageLoader.load(
+                        "/resources/images/bomb5.png"
+                )
         };
 
-        // tạo animation
-        anim = new SpriteAnimation(frames, 10);
+        /**
+         * Khởi tạo animation bom nổ.
+         */
+        anim =
+                new SpriteAnimation(frames, 10);
     }
 
-    // =========================================================
-    // ON CATCH
-    // =========================================================
-
     /**
-     * xử lý khi người chơi hứng trúng bom
+     * Xử lý khi người chơi hứng trúng bom.
+     * 
+     * Animation sẽ được reset
+     * để phát lại từ đầu.
      */
     @Override
     public void onCatch() {
 
-        // reset animation từ đầu
+        // Reset animation
         anim.reset();
     }
 
-    // =========================================================
-    // ON MISS
-    // =========================================================
-
     /**
-     * xử lý khi bom rơi xuống đất
+     * Xử lý khi bom rơi xuống đất.
+     * 
+     * Đồng bộ hành vi animation.
      */
     @Override
     public void onMiss() {
 
-        // reset animation
+        // Reset animation
         anim.reset();
     }
 
-    // =========================================================
-    // UPDATE
-    // =========================================================
-
     /**
-     * cập nhật animation bom
+     * Cập nhật trạng thái bom.
+     * 
+     * @param model model game
      */
     @Override
     public void update(GameModel model) {
 
-        // update khi đang animation
+        /**
+         * Chỉ update khi
+         * object đang animation.
+         */
         if (state == State.ANIMATING) {
 
+            // Update animation
             anim.update();
 
-            // animation kết thúc
+            /**
+             * Kết thúc object
+             * sau khi animation hoàn tất.
+             */
             if (anim.isFinished()) {
 
                 finish();
@@ -94,33 +119,60 @@ public class Bomb extends FallingObject {
         }
     }
 
-    // =========================================================
-    // DRAW
-    // =========================================================
-
     /**
-     * vẽ bom lên màn hình
+     * Vẽ Bomb lên màn hình.
+     * 
+     * @param g graphics
+     * @param centerX vị trí giữa lane
+     * @param laneWidth chiều rộng lane
      */
     @Override
-    public void draw(Graphics g, int centerX, int laneWidth) {
+    public void draw(
+            Graphics g,
+            int centerX,
+            int laneWidth
+    ) {
 
-        // bomb có kích thước lớn hơn egg
-        int size = (int)(laneWidth * 0.6f);
+        /**
+         * Bomb lớn hơn Egg.
+         */
+        int size =
+                (int) (laneWidth * 0.6f);
 
-        int x = centerX - size / 2;
+        int x =
+                centerX - size / 2;
 
-        int yDraw = (int) y;
+        int yDraw =
+                (int) y;
 
-        // vẽ animation khi đang nổ
+        /**
+         * Vẽ animation khi bom nổ.
+         */
         if (state == State.ANIMATING) {
 
-            g.drawImage(anim.getCurrentFrame(), x, yDraw, size, size, null);
+            g.drawImage(
+                    anim.getCurrentFrame(),
+                    x,
+                    yDraw,
+                    size,
+                    size,
+                    null
+            );
         }
 
-        // vẽ frame mặc định
+        /**
+         * Vẽ frame mặc định.
+         */
         else {
 
-            g.drawImage(frames[0], x, yDraw, size, size, null);
+            g.drawImage(
+                    frames[0],
+                    x,
+                    yDraw,
+                    size,
+                    size,
+                    null
+            );
         }
     }
 }

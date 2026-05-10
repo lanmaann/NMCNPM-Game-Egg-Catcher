@@ -7,13 +7,13 @@ import java.awt.Graphics;
  * FALLING OBJECT
  * =========================================================
  * lớp abstract đại diện cho mọi vật thể rơi trong game
- * 
+ *
  * các object kế thừa:
  * - Egg
  * - BadEgg
  * - Bomb
  * - Chicken
- * 
+ *
  * chức năng:
  * - quản lý lane
  * - quản lý vị trí rơi
@@ -24,20 +24,43 @@ import java.awt.Graphics;
  */
 public abstract class FallingObject {
 
-    // lane hiện tại của object
-    protected int lane;
-
-    // vị trí Y của object
-    protected float y = 0;
-
-    // tốc độ rơi
-    protected float speed = 5f;
-
-    // trạng thái hiện tại
-    protected State state = State.FALLING;
+    // =========================================================
+    // POSITION
+    // =========================================================
 
     /**
-     * constructor khởi tạo object theo lane
+     * lane hiện tại của object
+     */
+    protected int lane;
+
+    /**
+     * vị trí Y của object
+     * dùng float để di chuyển mượt hơn
+     */
+    protected float y = 0;
+
+    /**
+     * tốc độ rơi (pixel/frame)
+     */
+    protected float speed = 5f;
+
+    // =========================================================
+    // STATE
+    // =========================================================
+
+    /**
+     * trạng thái hiện tại của object
+     */
+    protected State state = State.FALLING;
+
+    // =========================================================
+    // CONSTRUCTOR
+    // =========================================================
+
+    /**
+     * khởi tạo object theo lane
+     *
+     * @param lane lane spawn object
      */
     public FallingObject(int lane) {
 
@@ -66,6 +89,8 @@ public abstract class FallingObject {
 
     /**
      * kiểm tra object có đang rơi không
+     *
+     * @return true nếu đang FALLING
      */
     public boolean isFalling() {
 
@@ -74,6 +99,8 @@ public abstract class FallingObject {
 
     /**
      * kiểm tra object đã chết chưa
+     *
+     * @return true nếu DEAD
      */
     public boolean isDead() {
 
@@ -90,27 +117,31 @@ public abstract class FallingObject {
     public final void catchObject() {
 
         // tránh xử lý nhiều lần
-        if (state != State.FALLING) return;
+        if (state != State.FALLING) {
+            return;
+        }
 
         // chuyển sang animation
         state = State.ANIMATING;
 
-        // gọi xử lý riêng của object
+        // xử lý riêng
         onCatch();
     }
 
     /**
-     * xử lý khi object bị rơi hụt
+     * xử lý khi object rơi hụt
      */
     public final void missObject() {
 
         // tránh xử lý nhiều lần
-        if (state != State.FALLING) return;
+        if (state != State.FALLING) {
+            return;
+        }
 
         // chuyển sang animation
         state = State.ANIMATING;
 
-        // gọi xử lý riêng của object
+        // xử lý riêng
         onMiss();
     }
 
@@ -128,6 +159,8 @@ public abstract class FallingObject {
 
     /**
      * lấy lane hiện tại
+     *
+     * @return lane
      */
     public int getLane() {
 
@@ -136,15 +169,19 @@ public abstract class FallingObject {
 
     /**
      * lấy vị trí Y
+     *
+     * @return vị trí y dạng int
      */
     public int getY() {
 
-        // ép float sang int khi sử dụng
+        // ép float -> int khi sử dụng
         return (int) y;
     }
 
     /**
      * set tốc độ rơi
+     *
+     * @param speed tốc độ mới
      */
     public void setSpeed(float speed) {
 
@@ -153,6 +190,8 @@ public abstract class FallingObject {
 
     /**
      * lấy trạng thái hiện tại
+     *
+     * @return state hiện tại
      */
     public State getState() {
 
@@ -165,6 +204,8 @@ public abstract class FallingObject {
 
     /**
      * cập nhật object
+     *
+     * @param model game model
      */
     public abstract void update(GameModel model);
 
@@ -180,6 +221,14 @@ public abstract class FallingObject {
 
     /**
      * vẽ object lên màn hình
+     *
+     * @param g graphics
+     * @param centerX vị trí giữa lane
+     * @param laneWidth chiều rộng lane
      */
-    public abstract void draw(Graphics g, int centerX, int laneWidth);
+    public abstract void draw(
+            Graphics g,
+            int centerX,
+            int laneWidth
+    );
 }

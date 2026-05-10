@@ -8,54 +8,190 @@ import java.awt.*;
 import java.util.List;
 
 /**
- * =========================================================
- * LEADERBOARD PANEL
- * =========================================================
- * giao diện hiển thị bảng xếp hạng
+ * Lớp giao diện bảng xếp hạng của trò chơi.
  * 
- * chức năng:
- * - hiển thị top điểm cao nhất
- * - đọc dữ liệu record từ file
- * - hiển thị danh sách leaderboard
- * - quay lại menu chính
- * =========================================================
+ * Chức năng:
+ * - Hiển thị top điểm cao nhất
+ * - Đọc dữ liệu record từ file
+ * - Hiển thị danh sách leaderboard
+ * - Quay lại menu chính
  */
 public class LeaderboardPanel extends JPanel {
 
     /**
-     * constructor khởi tạo leaderboard panel
+     * Constructor khởi tạo leaderboard panel.
+     * 
+     * @param onBack callback quay lại menu chính
      */
     public LeaderboardPanel(Runnable onBack) {
 
-        // layout chính
+        // Layout chính
         setLayout(new BorderLayout());
 
-        // màu nền
+        // Màu nền panel
         setBackground(new Color(20, 25, 45));
 
-        // =========================================================
-        // HEADER
-        // =========================================================
+        /**
+         * Header gồm:
+         * - Nút BACK
+         * - Tiêu đề leaderboard
+         */
+        JPanel header =
+                createHeader(onBack);
 
-        // nút back
-        JButton back = new JButton("BACK");
+        add(header, BorderLayout.NORTH);
+
+        /**
+         * Panel hiển thị danh sách record.
+         */
+        JPanel listPanel =
+                new JPanel();
+
+        listPanel.setLayout(
+                new BoxLayout(
+                        listPanel,
+                        BoxLayout.Y_AXIS
+                )
+        );
+
+        listPanel.setBackground(
+                new Color(20, 25, 45)
+        );
+
+        /**
+         * Hệ thống tải toàn bộ dữ liệu
+         * từ lớp RecordManager.
+         */
+        List<Record> list =
+                RecordManager.loadAll();
+
+        /**
+         * Trường hợp chưa có dữ liệu.
+         */
+        if (list.isEmpty()) {
+
+            JLabel empty =
+                    new JLabel(
+                            "NO RECORD YET!",
+                            SwingConstants.CENTER
+                    );
+
+            empty.setForeground(
+                    new Color(255, 215, 0)
+            );
+
+            empty.setFont(
+                    new Font(
+                            "Arial",
+                            Font.BOLD,
+                            24
+                    )
+            );
+
+            empty.setAlignmentX(
+                    Component.CENTER_ALIGNMENT
+            );
+
+            listPanel.add(
+                    Box.createVerticalStrut(80)
+            );
+
+            listPanel.add(empty);
+        }
+
+        /**
+         * Hiển thị top 3 record.
+         */
+        else {
+
+            for (
+                    int i = 0;
+                    i < Math.min(3, list.size());
+                    i++
+            ) {
+
+                Record r = list.get(i);
+
+                int rank = i + 1;
+
+                JPanel row =
+                        createRow(rank, r);
+
+                listPanel.add(row);
+
+                listPanel.add(
+                        Box.createVerticalStrut(8)
+                );
+            }
+        }
+
+        /**
+         * Scroll pane chứa leaderboard.
+         */
+        JScrollPane scroll =
+                new JScrollPane(listPanel);
+
+        scroll.setBorder(null);
+
+        scroll.getVerticalScrollBar()
+                .setUnitIncrement(12);
+
+        scroll.setBackground(
+                new Color(20, 25, 45)
+        );
+
+        add(scroll, BorderLayout.CENTER);
+    }
+
+    /**
+     * Tạo phần header của leaderboard.
+     * 
+     * @param onBack callback quay lại menu
+     * @return JPanel header
+     */
+    private JPanel createHeader(
+            Runnable onBack
+    ) {
+
+        /**
+         * Nút BACK.
+         */
+        JButton back =
+                new JButton("BACK");
 
         back.setFocusPainted(false);
 
-        back.setFont(new Font("Arial", Font.BOLD, 14));
+        back.setFont(
+                new Font(
+                        "Arial",
+                        Font.BOLD,
+                        14
+                )
+        );
 
-        back.setBackground(new Color(230, 230, 230));
+        back.setBackground(
+                new Color(230, 230, 230)
+        );
 
-        back.setPreferredSize(new Dimension(90, 35));
+        back.setPreferredSize(
+                new Dimension(90, 35)
+        );
 
         /**
-         * 1.4.5
-         * người chơi nhấn nút quay lại
-         * để quay lại màn hình bắt đầu game
+         * Người chơi quay lại
+         * màn hình chính.
          */
-        back.addActionListener(e -> onBack.run());
+        back.addActionListener(e -> {
 
-        // title
+            if (onBack != null) {
+
+                onBack.run();
+            }
+        });
+
+        /**
+         * Tiêu đề leaderboard.
+         */
         JLabel title =
                 new JLabel(
                         "TOP 3 LEADERBOARD",
@@ -64,12 +200,25 @@ public class LeaderboardPanel extends JPanel {
 
         title.setForeground(Color.WHITE);
 
-        title.setFont(new Font("Arial", Font.BOLD, 26));
+        title.setFont(
+                new Font(
+                        "Arial",
+                        Font.BOLD,
+                        26
+                )
+        );
 
-        // panel header
-        JPanel header = new JPanel(new BorderLayout());
+        /**
+         * Panel header.
+         */
+        JPanel header =
+                new JPanel(
+                        new BorderLayout()
+                );
 
-        header.setBackground(new Color(20, 25, 45));
+        header.setBackground(
+                new Color(20, 25, 45)
+        );
 
         header.setBorder(
                 BorderFactory.createEmptyBorder(
@@ -84,114 +233,31 @@ public class LeaderboardPanel extends JPanel {
 
         header.add(title, BorderLayout.CENTER);
 
-        add(header, BorderLayout.NORTH);
-
-        // =========================================================
-        // LIST PANEL
-        // =========================================================
-
-        JPanel listPanel = new JPanel();
-
-        listPanel.setLayout(
-                new BoxLayout(
-                        listPanel,
-                        BoxLayout.Y_AXIS
-                )
-        );
-
-        listPanel.setBackground(new Color(20, 25, 45));
-
-        // =========================================================
-        // LOAD RECORDS
-        // =========================================================
-
-        /**
-         * 1.4.2
-         * hệ thống gửi yêu cầu truy xuất dữ liệu
-         * đến lớp quản lý dữ liệu RecordManager
-         */
-        List<Record> list = RecordManager.loadAll();
-
-        // =========================================================
-        // EMPTY RECORD
-        // =========================================================
-
-        if (list.isEmpty()) {
-
-            /**
-             * ALT 1.4.2a.2
-             * hiển thị thông báo không có dữ liệu
-             */
-            JLabel empty =
-                    new JLabel(
-                            "NO RECORD YET!",
-                            SwingConstants.CENTER
-                    );
-
-            empty.setForeground(new Color(255, 215, 0));
-
-            empty.setFont(new Font("Arial", Font.BOLD, 24));
-
-            empty.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-            listPanel.add(Box.createVerticalStrut(80));
-
-            listPanel.add(empty);
-        }
-
-        // =========================================================
-        // SHOW TOP RECORDS
-        // =========================================================
-
-        else {
-
-            /**
-             * 1.4.4
-             * hiển thị top 3 điểm cao nhất
-             */
-            for (int i = 0; i < Math.min(3, list.size()); i++) {
-
-                Record r = list.get(i);
-
-                int rank = i + 1;
-
-                JPanel row = createRow(rank, r);
-
-                listPanel.add(row);
-
-                listPanel.add(Box.createVerticalStrut(8));
-            }
-        }
-
-        // =========================================================
-        // SCROLL PANE
-        // =========================================================
-
-        JScrollPane scroll = new JScrollPane(listPanel);
-
-        scroll.setBorder(null);
-
-        scroll.getVerticalScrollBar().setUnitIncrement(12);
-
-        scroll.setBackground(new Color(20, 25, 45));
-
-        add(scroll, BorderLayout.CENTER);
+        return header;
     }
 
-    // =========================================================
-    // RECORD ROW
-    // =========================================================
-
     /**
-     * tạo card hiển thị record
+     * Tạo card hiển thị record.
+     * 
+     * @param rank thứ hạng
+     * @param r dữ liệu record
+     * @return JPanel chứa record
      */
-    private JPanel createRow(int rank, Record r) {
+    private JPanel createRow(
+            int rank,
+            Record r
+    ) {
 
-        JPanel panel = new JPanel();
+        JPanel panel =
+                new JPanel();
 
-        panel.setLayout(new BorderLayout());
+        panel.setLayout(
+                new BorderLayout()
+        );
 
-        panel.setPreferredSize(new Dimension(300, 45));
+        panel.setPreferredSize(
+                new Dimension(300, 45)
+        );
 
         panel.setBorder(
                 BorderFactory.createEmptyBorder(
@@ -202,40 +268,59 @@ public class LeaderboardPanel extends JPanel {
                 )
         );
 
-        // màu nền card
-        panel.setBackground(new Color(40, 45, 70));
-
-        // text record
-        JLabel text = new JLabel(
-                rank + ".  Score: " + r.getScore() +
-                "   |   Time: " + r.getTime() + "s"
+        // Background card
+        panel.setBackground(
+                new Color(40, 45, 70)
         );
 
-        text.setFont(new Font("Arial", Font.BOLD, 14));
+        /**
+         * Nội dung record.
+         */
+        JLabel text =
+                new JLabel(
+                        rank
+                                + ".  Score: "
+                                + r.getScore()
+                                + "   |   Time: "
+                                + r.getTime()
+                                + "s"
+                );
 
-        // =========================================================
-        // RANK COLOR
-        // =========================================================
+        text.setFont(
+                new Font(
+                        "Arial",
+                        Font.BOLD,
+                        14
+                )
+        );
 
-        // hạng 1 - vàng
+        /**
+         * Màu hiển thị theo thứ hạng.
+         */
         if (rank == 1) {
 
-            text.setForeground(new Color(255, 215, 0));
+            // Gold
+            text.setForeground(
+                    new Color(255, 215, 0)
+            );
         }
 
-        // hạng 2 - bạc
         else if (rank == 2) {
 
-            text.setForeground(new Color(180, 180, 180));
+            // Silver
+            text.setForeground(
+                    new Color(180, 180, 180)
+            );
         }
 
-        // hạng 3 - đồng
         else if (rank == 3) {
 
-            text.setForeground(new Color(205, 127, 50));
+            // Bronze
+            text.setForeground(
+                    new Color(205, 127, 50)
+            );
         }
 
-        // mặc định
         else {
 
             text.setForeground(Color.WHITE);

@@ -11,37 +11,69 @@ import java.awt.event.KeyEvent;
  * =========================================================
  * GAME CONTROLLER
  * =========================================================
- * lớp điều khiển chính của game
- * 
+ * lớp điều khiển chính của game Egg Catcher
+ *
  * chức năng:
- * - xử lý game loop
+ * - quản lý game loop
  * - xử lý input bàn phím
- * - cập nhật model
  * - điều khiển restart game
+ * - cập nhật model
  * - phát âm thanh
  * =========================================================
  */
 public class GameController {
 
-    // model quản lý dữ liệu game
-    private GameModel model;
-
-    // view hiển thị giao diện
-    private final GameView view;
-
-    // thread chạy game loop
-    private Thread gameThread;
-
-    // trạng thái game loop
-    private volatile boolean running = false;
-
-    // xử lý bàn phím
-    private KeyAdapter keyHandler;
+    // =========================================================
+    // MODEL + VIEW
+    // =========================================================
 
     /**
-     * constructor khởi tạo controller
+     * model quản lý dữ liệu và logic game
      */
-    public GameController(GameModel model, GameView view) {
+    private GameModel model;
+
+    /**
+     * view hiển thị giao diện game
+     */
+    private final GameView view;
+
+    // =========================================================
+    // GAME LOOP
+    // =========================================================
+
+    /**
+     * thread chạy game loop
+     */
+    private Thread gameThread;
+
+    /**
+     * trạng thái game loop
+     */
+    private volatile boolean running = false;
+
+    // =========================================================
+    // INPUT
+    // =========================================================
+
+    /**
+     * bộ xử lý input bàn phím
+     */
+    private KeyAdapter keyHandler;
+
+    // =========================================================
+    // CONSTRUCTOR
+    // =========================================================
+
+    /**
+     * khởi tạo game controller
+     *
+     * @param model model game
+     * @param view giao diện game
+     */
+    public GameController(
+            GameModel model,
+            GameView view
+    ) {
 
         this.model = model;
         this.view = view;
@@ -60,10 +92,20 @@ public class GameController {
     public void start() {
 
         // tránh chạy nhiều thread
-        if (running) return;
+        if (running) {
+            return;
+        }
 
         running = true;
 
+        // phát nhạc nền
+        SoundManager.playBackgroundMusic(
+                "/resources/music/bgm.wav"
+        );
+
+        /**
+         * game loop chính
+         */
         gameThread = new Thread(() -> {
 
             // FPS mục tiêu
@@ -72,36 +114,49 @@ public class GameController {
             // thời gian mỗi frame
             final int frameTime = 1000 / FPS;
 
-            // game loop
+            // loop game
             while (running) {
 
-                long start = System.currentTimeMillis();
+                long start =
+                        System.currentTimeMillis();
 
-                // update game khi không pause hoặc game over
-                if (!model.isPaused() && !model.isGameOver()) {
+                // chỉ update khi chưa pause/game over
+                if (
+                        !model.isPaused()
+                                &&
+                                !model.isGameOver()
+                ) {
+
                     model.update();
                 }
 
-                // vẽ lại màn hình
+                // repaint giao diện
                 view.repaint();
 
-                // tính thời gian sleep
-                long sleep = frameTime - (System.currentTimeMillis() - start);
+                // tính delay giữ FPS ổn định
+                long sleep =
+                        frameTime
+                                -
+                                (
+                                        System.currentTimeMillis()
+                                                - start
+                                );
 
-                // delay để giữ FPS ổn định
                 if (sleep > 0) {
 
                     try {
+
                         Thread.sleep(sleep);
 
                     } catch (InterruptedException e) {
+
                         break;
                     }
                 }
             }
         });
 
-        // chạy thread
+        // chạy game thread
         gameThread.start();
     }
 
@@ -116,6 +171,7 @@ public class GameController {
 
         running = false;
 
+        // interrupt thread
         if (gameThread != null) {
 
             gameThread.interrupt();
@@ -125,68 +181,113 @@ public class GameController {
     }
 
     // =========================================================
-    // INPUT + SOUND
+    // INPUT
     // =========================================================
 
     /**
-     * khởi tạo xử lý input bàn phím
+     * khởi tạo input bàn phím
      */
     private void initInput() {
 
-        // cho phép nhận focus
+        // cho phép focus
         view.setFocusable(true);
 
-        // tránh add listener nhiều lần
+        /**
+         * tránh add nhiều listener
+         * khi restart
+         */
         if (keyHandler != null) {
+
             view.removeKeyListener(keyHandler);
         }
 
-        // tạo key listener mới
+        // =====================================================
+        // KEY LISTENER
+        // =====================================================
+
         keyHandler = new KeyAdapter() {
 
+            /**
+             * xử lý sự kiện nhấn phím
+             */
             @Override
             public void keyPressed(KeyEvent e) {
 
                 // không xử lý khi game over
-                if (model.isGameOver()) return;
+                if (model.isGameOver()) {
+                    return;
+                }
 
                 switch (e.getKeyCode()) {
 
-                    // di chuyển trái
+                    // =================================================
+                    // MOVE LEFT
+                    // =================================================
                     case KeyEvent.VK_LEFT:
+
                         model.getPlayer().moveLeft();
-                        SoundManager.play("/resources/sound/move.wav");
+
+                        SoundManager.playMove();
+
                         break;
 
-                    // di chuyển phải
+                    // =================================================
+                    // MOVE RIGHT
+                    // =================================================
                     case KeyEvent.VK_RIGHT:
+
                         model.getPlayer().moveRight();
-                        SoundManager.play("/resources/sound/move.wav");
+
+                        SoundManager.playMove();
+
                         break;
 
-                    // pause game
+                    // =================================================
+                    // PAUSE / RESUME
+                    // =================================================
                     case KeyEvent.VK_P:
+
                         model.togglePause();
-                        SoundManager.play("/resources/sound/click.wav");
+
+                        SoundManager.playUI();
+
+                        // pause -> stop nhạc
+                        if (model.isPaused()) {
+
+                            SoundManager.stopMusic();
+                        }
+
+                        // resume -> phát lại nhạc
+                        else {
+
+                            SoundManager.playBackgroundMusic(
+                                    "/resources/music/bgm.wav"
+                            );
+                        }
+
                         break;
 
-                    // restart game
+                    // =================================================
+                    // RESTART
+                    // =================================================
                     case KeyEvent.VK_R:
+
                         restart();
+
                         break;
                 }
             }
         };
 
-        // add listener vào view
+        // add listener
         view.addKeyListener(keyHandler);
 
-        // focus để nhận input
+        // focus nhận input
         view.requestFocusInWindow();
     }
 
     // =========================================================
-    // RESTART GAME
+    // RESTART
     // =========================================================
 
     /**
@@ -194,19 +295,19 @@ public class GameController {
      */
     public void restart() {
 
-        // dừng loop hiện tại
+        // dừng game loop hiện tại
         stop();
 
-        // reset model
+        // reset dữ liệu game
         model.reset();
 
         // phát âm thanh restart
-        SoundManager.play("/resources/sound/restart.wav");
+        SoundManager.playRestart();
 
-        // khởi tạo input lại
+        // reset input
         initInput();
 
-        // chạy lại game loop
+        // chạy lại game
         start();
     }
 }

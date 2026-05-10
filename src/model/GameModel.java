@@ -7,15 +7,6 @@ import java.util.*;
  * GAME MODEL
  * =========================================================
  * lớp quản lý toàn bộ dữ liệu và logic game
- * 
- * chức năng:
- * - quản lý player
- * - quản lý điểm số và mạng
- * - quản lý object rơi
- * - xử lý collision
- * - xử lý spawn object
- * - xử lý pause / game over
- * - quản lý thời gian chơi
  * =========================================================
  */
 public class GameModel {
@@ -23,75 +14,51 @@ public class GameModel {
     // =========================================================
     // PLAYER STATE
     // =========================================================
-
-    // người chơi
     private Player player;
 
-    // điểm số
     private int score = 0;
-
-    // số mạng
     private int lives = 3;
 
-    // trạng thái game over
     private boolean gameOver = false;
-
-    // trạng thái pause
     private boolean paused = false;
 
-    // tick game loop
     private int tick = 0;
-
-    // level hiện tại
     private int level = 1;
 
     // =========================================================
     // SCREEN
     // =========================================================
-
-    // chiều cao màn hình
     private int screenHeight = 600;
 
     // =========================================================
     // TIME SYSTEM
     // =========================================================
-
-    // thời gian bắt đầu
     private long startTime = System.currentTimeMillis();
-
-    // thời gian đóng băng khi pause
     private long frozenTime = 0;
 
     // =========================================================
     // OBJECT SYSTEM
     // =========================================================
-
-    // random object
     private final Random rand = new Random();
 
-    // danh sách object đang tồn tại
-    private final ArrayList<FallingObject> objects = new ArrayList<>();
+    private final ArrayList<FallingObject> objects =
+            new ArrayList<>();
 
-    // số lượng lane
     public static final int LANE_COUNT = 5;
 
     // =========================================================
     // SPAWN SYSTEM
     // =========================================================
-
-    // cooldown spawn
     private int spawnCooldown = 0;
 
-    // trạng thái âm thanh
+    // =========================================================
+    // SOUND
+    // =========================================================
     private boolean soundEnabled = true;
 
     // =========================================================
     // INIT
     // =========================================================
-
-    /**
-     * constructor khởi tạo game model
-     */
     public GameModel() {
 
         player = new Player(LANE_COUNT);
@@ -100,34 +67,24 @@ public class GameModel {
     // =========================================================
     // SCREEN SYNC
     // =========================================================
-
-    /**
-     * cập nhật chiều cao màn hình
-     */
     public void setScreenHeight(int h) {
 
         this.screenHeight = h;
     }
 
-    /**
-     * lấy vị trí Y của player
-     */
     public int getPlayerY() {
 
         return (int)(screenHeight * 0.82f);
     }
 
-    /**
-     * bật / tắt âm thanh
-     */
+    // =========================================================
+    // SOUND
+    // =========================================================
     public void setSoundEnabled(boolean s) {
 
         this.soundEnabled = s;
     }
 
-    /**
-     * kiểm tra âm thanh
-     */
     public boolean isSoundEnabled() {
 
         return soundEnabled;
@@ -136,26 +93,18 @@ public class GameModel {
     // =========================================================
     // RESET
     // =========================================================
-
-    /**
-     * reset toàn bộ game
-     */
     public void reset() {
 
         score = 0;
-
         lives = 3;
 
         gameOver = false;
-
         paused = false;
 
         tick = 0;
-
         level = 1;
 
         startTime = System.currentTimeMillis();
-
         frozenTime = 0;
 
         objects.clear();
@@ -164,40 +113,30 @@ public class GameModel {
     }
 
     // =========================================================
-    // PAUSE SYSTEM
+    // PAUSE
     // =========================================================
-
-    /**
-     * chuyển đổi trạng thái pause
-     */
     public void togglePause() {
 
         paused = !paused;
 
-        // lưu thời gian pause
         if (paused) {
 
             frozenTime = System.currentTimeMillis();
         }
 
-        // tiếp tục game
         else {
 
-            startTime += System.currentTimeMillis() - frozenTime;
+            startTime +=
+                    System.currentTimeMillis()
+                            - frozenTime;
         }
     }
 
-    /**
-     * kiểm tra trạng thái pause
-     */
     public boolean isPaused() {
 
         return paused;
     }
 
-    /**
-     * đóng băng thời gian khi game over
-     */
     private void freezeTime() {
 
         frozenTime = System.currentTimeMillis();
@@ -206,40 +145,33 @@ public class GameModel {
     // =========================================================
     // UPDATE LOOP
     // =========================================================
-
-    /**
-     * cập nhật game mỗi frame
-     */
     public void update() {
 
-        // không update khi pause hoặc game over
         if (gameOver || paused) return;
 
-        // tăng tick
         tick++;
 
-        // tăng level theo thời gian
         level = tick / 800 + 1;
 
-        // spawn object mới
         spawn();
 
-        Iterator<FallingObject> it = objects.iterator();
+        Iterator<FallingObject> it =
+                objects.iterator();
 
         while (it.hasNext()) {
 
             FallingObject obj = it.next();
 
-            // xử lý rơi
+            // rơi xuống
             obj.fall();
 
-            // update object
+            // update animation
             obj.update(this);
 
-            // kiểm tra va chạm
+            // collision
             checkCollision(obj);
 
-            // kiểm tra miss
+            // miss
             checkMiss(obj);
 
             // remove object chết
@@ -253,13 +185,8 @@ public class GameModel {
     // =========================================================
     // SPAWN
     // =========================================================
-
-    /**
-     * sinh object mới
-     */
     private void spawn() {
 
-        // cooldown spawn
         if (spawnCooldown > 0) {
 
             spawnCooldown--;
@@ -267,30 +194,34 @@ public class GameModel {
             return;
         }
 
-        // tránh spawn object quá sát nhau
+        // tránh spawn quá sát
         if (!objects.isEmpty()) {
 
-            FallingObject last = objects.get(objects.size() - 1);
+            FallingObject last =
+                    objects.get(objects.size() - 1);
 
-            if (last.getY() < screenHeight * 0.2f) return;
+            if (last.getY() < screenHeight * 0.2f) {
+
+                return;
+            }
         }
 
-        // tăng tần suất spawn theo level
-        int rate = Math.max(25, 60 - level * 4);
+        int rate =
+                Math.max(25, 60 - level * 4);
 
-        // random spawn
         if (rand.nextInt(rate) == 0) {
 
-            int lane = rand.nextInt(LANE_COUNT);
+            int lane =
+                    rand.nextInt(LANE_COUNT);
 
-            int type = rand.nextInt(100);
+            int type =
+                    rand.nextInt(100);
 
             FallingObject obj;
 
-            // =========================================================
-            // RANDOM OBJECT TYPE
-            // =========================================================
-
+            // =====================================================
+            // RANDOM OBJECT
+            // =====================================================
             if (type < 50) {
 
                 obj = new Egg(lane);
@@ -317,12 +248,12 @@ public class GameModel {
             }
 
             // tăng tốc độ theo level
-            obj.setSpeed(Math.min(10, 3 + level / 2));
+            obj.setSpeed(
+                    Math.min(10, 3 + level / 2f)
+            );
 
-            // add object vào game
             objects.add(obj);
 
-            // reset cooldown
             spawnCooldown = 18;
         }
     }
@@ -330,30 +261,31 @@ public class GameModel {
     // =========================================================
     // COLLISION
     // =========================================================
-
-    /**
-     * kiểm tra va chạm với player
-     */
     private void checkCollision(FallingObject obj) {
 
-        // chỉ check object đang rơi
         if (!obj.isFalling()) return;
 
         int playerY = getPlayerY();
 
-        // tolerance va chạm
-        int tolerance = (int)(screenHeight * 0.025f);
+        int tolerance =
+                (int)(screenHeight * 0.025f);
 
-        // bomb có hitbox lớn hơn
+        // bomb hitbox to hơn
         if (obj instanceof Bomb) {
 
             tolerance *= 1.4;
         }
 
-        // kiểm tra cùng lane và đúng vị trí
-        if (obj.getLane() == player.getLane()
-                && obj.getY() >= playerY - tolerance
-                && obj.getY() <= playerY + tolerance) {
+        boolean collide =
+                obj.getLane() == player.getLane()
+                        &&
+                        obj.getY()
+                                >= playerY - tolerance
+                        &&
+                        obj.getY()
+                                <= playerY + tolerance;
+
+        if (collide) {
 
             obj.catchObject();
 
@@ -362,21 +294,20 @@ public class GameModel {
     }
 
     // =========================================================
-    // MISS CHECK
+    // MISS
     // =========================================================
-
-    /**
-     * kiểm tra object rơi hụt
-     */
     private void checkMiss(FallingObject obj) {
 
-        // chỉ check object đang rơi
         if (!obj.isFalling()) return;
 
         int playerY = getPlayerY();
 
-        // object vượt qua player
-        if (obj.getY() > playerY + screenHeight * 0.04f) {
+        if (
+                obj.getY()
+                        >
+                        playerY
+                                + screenHeight * 0.04f
+        ) {
 
             obj.missObject();
 
@@ -387,33 +318,38 @@ public class GameModel {
     // =========================================================
     // GAME RULE
     // =========================================================
+    private void applyRule(
+            FallingObject obj,
+            boolean caught
+    ) {
 
-    /**
-     * áp dụng luật game
-     */
-    private void applyRule(FallingObject obj, boolean caught) {
-
-        // =========================================================
+        // =====================================================
         // EGG
-        // =========================================================
-
+        // =====================================================
         if (obj instanceof Egg) {
 
             if (caught) {
 
                 score++;
+
+                if (soundEnabled) {
+                    util.SoundManager.playCatch();
+                }
             }
 
             else {
 
                 lives--;
+
+                if (soundEnabled) {
+                    util.SoundManager.playBreak();
+                }
             }
         }
 
-        // =========================================================
+        // =====================================================
         // BAD EGG
-        // =========================================================
-
+        // =====================================================
         else if (obj instanceof BadEgg) {
 
             if (caught) {
@@ -422,39 +358,48 @@ public class GameModel {
             }
         }
 
-        // =========================================================
+        // =====================================================
         // BOMB
-        // =========================================================
-
+        // =====================================================
         else if (obj instanceof Bomb) {
 
             if (caught) {
 
                 lives--;
+
+                if (soundEnabled) {
+                    util.SoundManager.playExplosion();
+                }
             }
         }
 
-        // =========================================================
+        // =====================================================
         // GOLDEN EGG
-        // =========================================================
-
+        // =====================================================
         else if (obj instanceof GoldenEgg) {
 
             if (caught) {
 
                 score += 5;
+
+                if (soundEnabled) {
+                    util.SoundManager.playGold();
+                }
             }
         }
 
-        // =========================================================
+        // =====================================================
         // CHICKEN
-        // =========================================================
-
+        // =====================================================
         else if (obj instanceof Chicken) {
 
             if (caught) {
 
                 lives--;
+
+                if (soundEnabled) {
+                    util.SoundManager.playChicken();
+                }
             }
         }
 
@@ -464,10 +409,9 @@ public class GameModel {
             score = 0;
         }
 
-        // =========================================================
+        // =====================================================
         // GAME OVER
-        // =========================================================
-
+        // =====================================================
         if (lives <= 0) {
 
             lives = 0;
@@ -476,84 +420,70 @@ public class GameModel {
 
             freezeTime();
 
-            RecordManager.add(score, getTimeSurvived());
+            if (soundEnabled) {
+
+                util.SoundManager.playGameOverMusic(
+                        "/resources/music/gameover.wav"
+                );
+            }
+
+            RecordManager.add(
+                    score,
+                    getTimeSurvived()
+            );
         }
     }
 
     // =========================================================
     // TIME
     // =========================================================
-
-    /**
-     * lấy thời gian sống sót
-     */
     public int getTimeSurvived() {
 
         long current;
 
-        // đóng băng thời gian khi pause/game over
         if (gameOver || paused) {
 
             current = frozenTime;
         }
 
-        // thời gian hiện tại
         else {
 
             current = System.currentTimeMillis();
         }
 
-        // đổi sang giây
-        return (int) ((current - startTime) / 1000);
+        return (int)(
+                (current - startTime) / 1000
+        );
     }
 
     // =========================================================
     // GETTERS
     // =========================================================
-
-    /**
-     * lấy player
-     */
     public Player getPlayer() {
 
         return player;
     }
 
-    /**
-     * lấy danh sách object
-     */
     public ArrayList<FallingObject> getObjects() {
 
         return objects;
     }
 
-    /**
-     * lấy điểm số
-     */
     public int getScore() {
 
         return score;
     }
 
-    /**
-     * lấy số mạng
-     */
     public int getLives() {
 
         return lives;
     }
 
-    /**
-     * lấy level
-     */
     public int getLevel() {
 
         return level;
     }
 
-    /**
-     * kiểm tra game over
-     */
     public boolean isGameOver() {
 
         return gameOver;

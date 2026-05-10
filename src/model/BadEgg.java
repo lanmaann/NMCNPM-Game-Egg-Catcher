@@ -4,108 +4,197 @@ import java.awt.*;
 import util.ImageLoader;
 
 /**
- * lớp đại diện cho trứng xấu trong game
+ * Lớp đại diện cho Bad Egg trong trò chơi.
  * 
- * bad egg sẽ:
- * - không bị vỡ khi người chơi hứng được
- * - phát animation vỡ khi rơi xuống đất
+ * Chức năng:
+ * - Hiển thị trứng xấu rơi xuống
+ * - Phát animation vỡ khi chạm đất
+ * - Kết thúc object khi animation hoàn tất
+ * - Không phát animation khi người chơi hứng được
  */
 public class BadEgg extends FallingObject {
 
-    // animation khi trứng bị vỡ
+    /**
+     * Animation vỡ của trứng.
+     */
     private SpriteAnimation breakAnim;
 
-    // hình ảnh mặc định của trứng
+    /**
+     * Hình ảnh mặc định của trứng.
+     */
     private Image idle;
 
-    // trạng thái trứng có đang vỡ hay không
+    /**
+     * Trạng thái trứng có đang vỡ hay không.
+     */
     private boolean broken = false;
 
     /**
-     * khởi tạo bad egg theo lane
+     * Constructor khởi tạo Bad Egg theo lane.
+     * 
+     * @param lane lane xuất hiện
      */
     public BadEgg(int lane) {
+
         super(lane);
 
-        // load ảnh mặc định
-        idle = ImageLoader.load("/resources/images/badEgg1.png");
+        /**
+         * Load hình ảnh mặc định.
+         */
+        idle = ImageLoader.load(
+                "/resources/images/badEgg1.png"
+        );
 
-        // load các frame animation vỡ
+        /**
+         * Load các frame animation vỡ.
+         */
         Image[] frames = new Image[]{
-                ImageLoader.load("/resources/images/badEgg2.png"),
-                ImageLoader.load("/resources/images/badEgg3.png"),
-                ImageLoader.load("/resources/images/badEgg4.png")
+
+                ImageLoader.load(
+                        "/resources/images/badEgg2.png"
+                ),
+
+                ImageLoader.load(
+                        "/resources/images/badEgg3.png"
+                ),
+
+                ImageLoader.load(
+                        "/resources/images/badEgg4.png"
+                )
         };
 
-        // tạo animation
-        breakAnim = new SpriteAnimation(frames, 6);
+        /**
+         * Khởi tạo animation.
+         */
+        breakAnim =
+                new SpriteAnimation(frames, 6);
     }
 
     /**
-     * xử lý khi người chơi hứng được trứng
+     * Xử lý khi người chơi hứng được trứng.
+     * 
+     * Bad Egg sẽ:
+     * - Không phát animation vỡ
+     * - Kết thúc object ngay lập tức
      */
     @Override
     public void onCatch() {
 
-        // 👉 hứng được thì không vỡ
+        // Không bị vỡ
         broken = false;
 
-        // reset animation tránh lỗi frame cũ
+        // Reset animation tránh lỗi frame cũ
         breakAnim.reset();
 
-        // kết thúc object
+        // Kết thúc object
         finish();
     }
 
     /**
-     * xử lý khi trứng rơi xuống đất
+     * Xử lý khi trứng rơi xuống đất.
+     * 
+     * Bad Egg sẽ:
+     * - Chuyển sang trạng thái vỡ
+     * - Phát animation break
      */
     @Override
     public void onMiss() {
 
-        // 👉 trứng bị vỡ
+        // Trứng bị vỡ
         broken = true;
 
-        // reset animation
+        // Reset animation
         breakAnim.reset();
     }
 
     /**
-     * cập nhật trạng thái animation
+     * Cập nhật trạng thái object.
+     * 
+     * @param model model game
      */
     @Override
     public void update(GameModel model) {
 
-        // chỉ update khi đang animation và bị vỡ
-        if (state == State.ANIMATING && broken) {
+        /**
+         * Chỉ update animation khi:
+         * - Object đang ở trạng thái animation
+         * - Trứng đang bị vỡ
+         */
+        if (
+                state == State.ANIMATING
+                        &&
+                        broken
+        ) {
 
+            // Update animation
             breakAnim.update();
 
-            // animation xong thì kết thúc object
+            /**
+             * Animation kết thúc
+             * thì xóa object.
+             */
             if (breakAnim.isFinished()) {
+
                 finish();
             }
         }
     }
 
     /**
-     * vẽ bad egg lên màn hình
+     * Vẽ Bad Egg lên màn hình.
+     * 
+     * @param g graphics
+     * @param centerX vị trí giữa lane
+     * @param laneWidth chiều rộng lane
      */
     @Override
-    public void draw(Graphics g, int centerX, int laneWidth) {
+    public void draw(
+            Graphics g,
+            int centerX,
+            int laneWidth
+    ) {
 
-        int size = (int)(laneWidth * 0.5f);
-        int x = centerX - size / 2;
-        int yDraw = (int) y;
+        int size =
+                (int) (laneWidth * 0.5f);
 
-        // 👉 vẽ animation khi trứng bị vỡ
-        if (state == State.ANIMATING && broken) {
-            g.drawImage(breakAnim.getCurrentFrame(), x, yDraw, size, size, null);
+        int x =
+                centerX - size / 2;
+
+        int yDraw =
+                (int) y;
+
+        /**
+         * Vẽ animation khi trứng bị vỡ.
+         */
+        if (
+                state == State.ANIMATING
+                        &&
+                        broken
+        ) {
+
+            g.drawImage(
+                    breakAnim.getCurrentFrame(),
+                    x,
+                    yDraw,
+                    size,
+                    size,
+                    null
+            );
         }
 
-        // 👉 vẽ hình mặc định
+        /**
+         * Vẽ hình mặc định.
+         */
         else {
-            g.drawImage(idle, x, yDraw, size, size, null);
+
+            g.drawImage(
+                    idle,
+                    x,
+                    yDraw,
+                    size,
+                    size,
+                    null
+            );
         }
     }
 }

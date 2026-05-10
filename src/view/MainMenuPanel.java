@@ -43,6 +43,8 @@ public class MainMenuPanel extends JPanel {
         // BUTTONS
         // =========================
         JButton start = createButton("START", onStart);
+        
+    	//1.4.1. Người chơi chọn chức năng xem điểm số trên giao diện.(khi ở màn hình bắt đầu game)
         JButton leaderboard = createButton("LEADERBOARD", onLeaderboard);
         JButton exit = createButton("EXIT", onExit);
 

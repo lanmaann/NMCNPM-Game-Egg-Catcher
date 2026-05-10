@@ -107,7 +107,7 @@ public class GameView extends JPanel {
                 // ================= GAME OVER =================
                 if (model.isGameOver()) {
 
-                	//1.4.1. Người chơi chọn chức năng xem điểm số trên giao diện.
+                	//1.4.1. Người chơi chọn chức năng xem điểm số trên giao diện.(khi ở màn hình kết thúc game)
                     if (recordBtn.contains(p) && onRecords != null) {
                         onRecords.run();
                     }

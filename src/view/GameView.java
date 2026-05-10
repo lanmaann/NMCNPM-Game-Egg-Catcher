@@ -1,14 +1,14 @@
 package view;
 
 import model.*;
+import model.RecordManager;
 import model.Record;
-import util.ImageLoader;
-import util.SoundManager;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-
+import util.ImageLoader;
+import util.SoundManager;
 /**
  * =========================================================
  * GAME VIEW
@@ -28,67 +28,50 @@ public class GameView extends JPanel {
     // =========================================================
     // MODEL + CALLBACK
     // =========================================================
-
     private GameModel model;
 
     private Runnable onHome;
     private Runnable onRecords;
 
-    // =========================================================
-    // TOP BUTTONS
-    // =========================================================
-
+    // =========================
+    // BUTTONS
+    // =========================
     private Rectangle pauseBtn = new Rectangle();
-    private Rectangle soundBtn = new Rectangle();
-
-    // =========================================================
-    // GAME OVER BUTTONS
-    // =========================================================
 
     private Rectangle recordBtn = new Rectangle();
-    private Rectangle replayBtn = new Rectangle();
     private Rectangle homeBtn = new Rectangle();
-
-    // =========================================================
+    private Rectangle replayBtn = new Rectangle();
+   
+    // =========================
     // PAUSE SCREEN BUTTONS
-    // =========================================================
-
+    // =========================
     private Rectangle resumeBtn = new Rectangle();
     private Rectangle restartBtn = new Rectangle();
-    private Rectangle soundPauseBtn = new Rectangle();
     private Rectangle homePauseBtn = new Rectangle();
+    private Rectangle soundBtn = new Rectangle();
+    private Rectangle musicBtn = new Rectangle();
 
-    // =========================================================
+    // =========================
     // STATE
-    // =========================================================
-
+    // =========================
     private boolean hoverPause = false;
 
-    // =========================================================
+    // =========================
     // ADS
-    // =========================================================
-
+    // =========================
     private Image gameOverAd;
-
     /**
      * constructor khởi tạo game view
      */
-    public GameView(
-            GameModel model,
-            Runnable onHome,
-            Runnable onRecords
-    ) {
-
+    public GameView(GameModel model, Runnable onHome, Runnable onRecords) {
         this.model = model;
         this.onHome = onHome;
         this.onRecords = onRecords;
 
         setBackground(new Color(245, 248, 255));
         setFocusable(true);
-
         // load ảnh quảng cáo
-        gameOverAd =
-                ImageLoader.load("/resources/ads/ad1.png");
+        gameOverAd = ImageLoader.load("/resources/ads/ad1.png");
 
         initMouse();
     }
@@ -103,180 +86,120 @@ public class GameView extends JPanel {
     private void initMouse() {
 
         addMouseListener(new MouseAdapter() {
-
             @Override
             public void mouseClicked(MouseEvent e) {
 
                 Point p = e.getPoint();
-
                 // =================================================
                 // TOP BUTTONS
                 // =================================================
 
                 // pause
                 if (pauseBtn.contains(p)) {
-
                     model.togglePause();
+
+                    if (SoundManager.SOUND_ON) {
+                        SoundManager.playUI();
+                    }
 
                     if (model.isPaused()) {
                         SoundManager.stopMusic();
                     } else {
-                        SoundManager.playBackgroundMusic(
-                                "/resources/music/bgm.wav"
-                        );
+                        SoundManager.playMusic("/resources/music/bgm.wav");
                     }
 
                     return;
                 }
 
-                // sound
-                if (soundBtn.contains(p)) {
-
-                    SoundManager.SOUND_ON =
-                            !SoundManager.SOUND_ON;
-
-                    SoundManager.MUSIC_ON =
-                            !SoundManager.MUSIC_ON;
-
-                    if (!SoundManager.MUSIC_ON) {
-
-                        SoundManager.stopMusic();
-
-                    } else {
-
-                        SoundManager.playBackgroundMusic(
-                                "/resources/music/bgm.wav"
-                        );
-                    }
-
-                    repaint();
-                    return;
-                }
-
-                // =================================================
-                // PAUSE SCREEN
-                // =================================================
-
+                // ================= PAUSE SCREEN =================
                 if (model.isPaused()) {
 
-                    // resume
                     if (resumeBtn.contains(p)) {
-
                         model.togglePause();
 
                         if (SoundManager.MUSIC_ON) {
-
-                            SoundManager.playBackgroundMusic(
-                                    "/resources/music/bgm.wav"
-                            );
+                            SoundManager.playMusic("/resources/music/bgm.wav");
                         }
-
                         return;
                     }
-
                     // restart
                     if (restartBtn.contains(p)) {
-
                         model.reset();
 
                         if (SoundManager.MUSIC_ON) {
-
-                            SoundManager.playBackgroundMusic(
-                                    "/resources/music/bgm.wav"
-                            );
+                            SoundManager.playMusic("/resources/music/bgm.wav");
                         }
+                        return;
+                    }
 
+                    if (homePauseBtn.contains(p)) {
+                        if (onHome != null) onHome.run();
                         return;
                     }
 
                     // toggle sound
-                    if (soundPauseBtn.contains(p)) {
+                    if (soundBtn.contains(p)) {
+                        SoundManager.SOUND_ON = !SoundManager.SOUND_ON;
 
-                        SoundManager.SOUND_ON =
-                                !SoundManager.SOUND_ON;
+                        if (!SoundManager.SOUND_ON) {
+                            // không cần stop music ở đây (chỉ SFX)
+                        }
 
-                        SoundManager.MUSIC_ON =
-                                !SoundManager.MUSIC_ON;
+                        return;
+                    }
+
+                    if (musicBtn.contains(p)) {
+                        SoundManager.MUSIC_ON = !SoundManager.MUSIC_ON;
 
                         if (!SoundManager.MUSIC_ON) {
-
                             SoundManager.stopMusic();
-
                         } else {
-
-                            SoundManager.playBackgroundMusic(
-                                    "/resources/music/bgm.wav"
-                            );
-                        }
-
-                        repaint();
-                        return;
-                    }
-
-                    // home
-                    if (homePauseBtn.contains(p)) {
-
-                        if (onHome != null) {
-                            onHome.run();
+                            SoundManager.playMusic("/resources/music/bgm.wav");
                         }
 
                         return;
                     }
 
+                    model.togglePause();
                     return;
                 }
 
                 // =================================================
                 // GAME OVER
                 // =================================================
-
                 if (model.isGameOver()) {
 
-                    // records
-                    if (recordBtn.contains(p)
-                            && onRecords != null) {
-
+                    if (recordBtn.contains(p) && onRecords != null) {
                         onRecords.run();
-                        return;
+                      
                     }
-
-                    // replay
                     if (replayBtn.contains(p)) {
-
                         model.reset();
 
                         if (SoundManager.MUSIC_ON) {
-
-                            SoundManager.playBackgroundMusic(
-                                    "/resources/music/bgm.wav"
-                            );
+                            SoundManager.playMusic("/resources/music/bgm.wav");
                         }
 
                         return;
                     }
-
-                    // home
-                    if (homeBtn.contains(p)
-                            && onHome != null) {
-
+                    //home
+                    if (homeBtn.contains(p) && onHome != null) {
                         onHome.run();
+                       
+                    }
+                    if (recordBtn.contains(p) && onRecords != null) {
+                        onRecords.run();
                     }
                 }
             }
         });
-
         // =========================================================
         // HOVER EFFECT
         // =========================================================
-
         addMouseMotionListener(new MouseMotionAdapter() {
-
             @Override
             public void mouseMoved(MouseEvent e) {
-
-                hoverPause =
-                        pauseBtn.contains(e.getPoint());
-
+                hoverPause = pauseBtn.contains(e.getPoint());
                 repaint();
             }
         });
@@ -285,10 +208,8 @@ public class GameView extends JPanel {
     // =========================================================
     // PAINT
     // =========================================================
-
     @Override
     protected void paintComponent(Graphics g) {
-
         super.paintComponent(g);
 
         model.setScreenHeight(getHeight());
@@ -301,33 +222,21 @@ public class GameView extends JPanel {
 
         drawTopButtons(g);
 
-        if (model.isPaused()) {
-            drawPauseScreen(g);
-        }
-
-        if (model.isGameOver()) {
-            drawGameOver(g);
-        }
+        if (model.isPaused()) drawPauseScreen(g);
+        if (model.isGameOver()) drawGameOver(g);
     }
 
     // =========================================================
     // BACKGROUND
     // =========================================================
-
     private void drawBackground(Graphics g) {
 
         Graphics2D g2 = (Graphics2D) g;
 
-        g2.setPaint(
-                new GradientPaint(
-                        0,
-                        0,
-                        new Color(245, 248, 255),
-                        0,
-                        getHeight(),
-                        new Color(190, 210, 255)
-                )
-        );
+        g2.setPaint(new GradientPaint(
+                0, 0, new Color(245, 248, 255),
+                0, getHeight(), new Color(190, 210, 255)
+        ));
 
         g2.fillRect(0, 0, getWidth(), getHeight());
     }
@@ -335,7 +244,6 @@ public class GameView extends JPanel {
     // =========================================================
     // LANE
     // =========================================================
-
     private int laneWidth() {
         return getWidth() / GameModel.LANE_COUNT;
     }
@@ -345,13 +253,10 @@ public class GameView extends JPanel {
     }
 
     private void drawLane(Graphics g) {
-
         g.setColor(new Color(0, 0, 0, 25));
 
         for (int i = 1; i < GameModel.LANE_COUNT; i++) {
-
             int x = i * laneWidth();
-
             g.drawLine(x, 0, x, getHeight());
         }
     }
@@ -359,92 +264,47 @@ public class GameView extends JPanel {
     // =========================================================
     // TOP BUTTONS
     // =========================================================
-
     private void drawTopButtons(Graphics g) {
 
         Graphics2D g2 = (Graphics2D) g;
 
         int size = 40;
 
-        // =====================================================
-        // PAUSE BUTTON
-        // =====================================================
-
+        // PAUSE
         int px = getWidth() - 50;
         int py = 10;
 
         pauseBtn = new Rectangle(px, py, size, size);
 
-        g2.setColor(
-                hoverPause
-                        ? new Color(220, 220, 220)
-                        : new Color(255, 255, 255, 220)
-        );
-
+        g2.setColor(new Color(255, 255, 255, 200));
         g2.fillOval(px, py, size, size);
 
         g2.setColor(Color.BLACK);
-
         g2.fillRoundRect(px + 12, py + 10, 4, 20, 2, 2);
         g2.fillRoundRect(px + 22, py + 10, 4, 20, 2, 2);
 
-        // =====================================================
-        // SOUND BUTTON
-        // =====================================================
-
-        int sx = px - 50;
-
-        soundBtn = new Rectangle(sx, py, size, size);
-
-        g2.setColor(new Color(255, 255, 255, 220));
-        g2.fillOval(sx, py, size, size);
-
-        g2.setColor(Color.BLACK);
-        g2.setFont(new Font("Arial", Font.BOLD, 14));
-
-        g2.drawString(
-                SoundManager.SOUND_ON ? "🔊" : "🔇",
-                sx + 10,
-                py + 25
-        );
     }
 
     // =========================================================
     // PLAYER
     // =========================================================
-
     private void drawPlayer(Graphics g) {
-
         Player p = model.getPlayer();
-
-        p.draw(
-                g,
-                laneCenter(p.getLane()),
-                laneWidth(),
-                getHeight()
-        );
+        p.draw(g, laneCenter(p.getLane()), laneWidth(), getHeight());
     }
 
     // =========================================================
     // OBJECTS
     // =========================================================
-
     private void drawObjects(Graphics g) {
-
         for (FallingObject o : model.getObjects()) {
-
-            o.draw(
-                    g,
-                    laneCenter(o.getLane()),
-                    laneWidth()
-            );
+            o.draw(g, laneCenter(o.getLane()), laneWidth());
         }
     }
 
     // =========================================================
     // HUD
     // =========================================================
-
     private void drawHUD(Graphics g) {
 
         Graphics2D g2 = (Graphics2D) g;
@@ -452,57 +312,23 @@ public class GameView extends JPanel {
         int w = getWidth();
 
         g2.setColor(new Color(255, 255, 255, 220));
-
-        g2.fillRoundRect(
-                10,
-                10,
-                w - 20,
-                60,
-                18,
-                18
-        );
+        g2.fillRoundRect(10, 10, w - 20, 60, 18, 18);
 
         g2.setColor(Color.BLACK);
-
         g2.setFont(new Font("Arial", Font.BOLD, 13));
 
         int time = model.getTimeSurvived();
+        String mmss = String.format("%02d:%02d", time / 60, time % 60);
 
-        String mmss =
-                String.format("%02d:%02d", time / 60, time % 60);
-
-        Record best = RecordManager.getBestRecord();
-
-        g2.drawString(
-                "Score: " + model.getScore(),
-                20,
-                35
-        );
-
-        g2.drawString(
-                "Best: " + best.getScore(),
-                120,
-                35
-        );
-
-        g2.drawString(
-                "Lives: " + model.getLives(),
-                240,
-                35
-        );
-
-        g2.drawString(
-                "Time: " + mmss,
-                360,
-                35
-        );
+        g2.drawString("Score: " + model.getScore(), 20, 35);
+        g2.drawString("Lives: " + model.getLives(), 150, 35);
+        g2.drawString("Time: " + mmss, 280, 35);
     }
 
     // =========================================================
-    // PAUSE SCREEN
+    // PAUSE SCREEN (FULL BUTTONS)
     // =========================================================
-
-     private void drawPauseScreen(Graphics g) {
+    private void drawPauseScreen(Graphics g) {
 
         Graphics2D g2 = (Graphics2D) g;
 
@@ -542,10 +368,10 @@ public class GameView extends JPanel {
         drawButton(g2, musicBtn,
                 "MUSIC: " + (SoundManager.MUSIC_ON ? "ON" : "OFF"));
     }
+
     // =========================================================
     // GAME OVER
     // =========================================================
-
     private void drawGameOver(Graphics g) {
 
         Graphics2D g2 = (Graphics2D) g;
@@ -554,137 +380,48 @@ public class GameView extends JPanel {
         int h = getHeight();
 
         g2.setColor(new Color(0, 0, 0, 170));
-
         g2.fillRect(0, 0, w, h);
 
-        int bw = (int) (w * 0.75);
-        int bh = (int) (h * 0.78);
+        int bw = (int)(w * 0.75);
+        int bh = (int)(h * 0.7);
 
         int x = (w - bw) / 2;
         int y = (h - bh) / 2;
 
         g2.setColor(Color.WHITE);
-
         g2.fillRoundRect(x, y, bw, bh, 25, 25);
 
-        // =====================================================
-        // AD
-        // =====================================================
+        g2.setColor(Color.BLACK);
+        g2.setFont(new Font("Arial", Font.BOLD, 22));
+        g2.drawString("GAME OVER", x + 40, y + 40);
 
         if (gameOverAd != null) {
-
-            g2.drawImage(
-                    gameOverAd,
-                    x + 30,
-                    y + 25,
-                    bw - 60,
-                    120,
-                    null
-            );
+            g2.drawImage(gameOverAd, x + 30, y + 70, bw - 60, 120, null);
         }
 
-        // =====================================================
-        // TITLE
-        // =====================================================
-
-        g2.setColor(Color.BLACK);
-
-        g2.setFont(new Font("Arial", Font.BOLD, 24));
-
-        String title = "GAME OVER";
-
-        FontMetrics fmTitle = g2.getFontMetrics();
-
-        int titleX =
-                x + (bw - fmTitle.stringWidth(title)) / 2;
-
-        g2.drawString(title, titleX, y + 185);
-
-        // =====================================================
-        // SCORE
-        // =====================================================
-
-        int currentScore = model.getScore();
-
-        boolean highScore =
-                currentScore >= RecordManager.getHighScore();
-
-        g2.setFont(new Font("Arial", Font.BOLD, 20));
-
-        String scoreText;
-
-        if (highScore) {
-
-            g2.setColor(new Color(255, 140, 0));
-
-            scoreText =
-                    "NEW HIGH SCORE: " + currentScore;
-
-        } else {
-
-            g2.setColor(Color.BLACK);
-
-            scoreText =
-                    "SCORE: " + currentScore;
-        }
-
-        FontMetrics fmScore = g2.getFontMetrics();
-
-        int scoreX =
-                x + (bw - fmScore.stringWidth(scoreText)) / 2;
-
-        g2.drawString(scoreText, scoreX, y + 230);
-
-        // =====================================================
-        // BUTTONS
-        // =====================================================
-
-        recordBtn =
-                new Rectangle(x + 40, y + 300, bw - 80, 40);
-
-        replayBtn =
-                new Rectangle(x + 40, y + 350, bw - 80, 40);
-
-        homeBtn =
-                new Rectangle(x + 40, y + 400, bw - 80, 40);
+        recordBtn = new Rectangle(x + 40, y + 220, bw - 80, 40);
+        replayBtn = new Rectangle(x + 40, y + 270, bw - 80, 40);
+        homeBtn = new Rectangle(x + 40, y + 320, bw - 80, 40);
 
         drawButton(g2, recordBtn, "RECORDS");
-
         drawButton(g2, replayBtn, "PLAY AGAIN");
-
         drawButton(g2, homeBtn, "HOME");
     }
 
     // =========================================================
-    // BUTTON UI
+    // BUTTON
     // =========================================================
-
-    private void drawButton(
-            Graphics2D g2,
-            Rectangle r,
-            String text
-    ) {
+    private void drawButton(Graphics2D g2, Rectangle r, String text) {
 
         g2.setColor(new Color(220, 220, 220));
-
-        g2.fillRoundRect(
-                r.x,
-                r.y,
-                r.width,
-                r.height,
-                12,
-                12
-        );
+        g2.fillRoundRect(r.x, r.y, r.width, r.height, 12, 12);
 
         g2.setColor(Color.BLACK);
 
         FontMetrics fm = g2.getFontMetrics();
 
-        int tx =
-                r.x + (r.width - fm.stringWidth(text)) / 2;
-
-        int ty =
-                r.y + (r.height + fm.getAscent()) / 2 - 3;
+        int tx = r.x + (r.width - fm.stringWidth(text)) / 2;
+        int ty = r.y + (r.height + fm.getAscent()) / 2 - 3;
 
         g2.drawString(text, tx, ty);
     }

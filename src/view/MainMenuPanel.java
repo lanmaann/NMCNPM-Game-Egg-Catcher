@@ -79,6 +79,7 @@ public class MainMenuPanel extends JPanel {
 
         title.setFont(new Font("Arial", Font.BOLD, 24));
 
+
         title.setBorder(
                 BorderFactory.createEmptyBorder(
                         10,
@@ -110,6 +111,16 @@ public class MainMenuPanel extends JPanel {
 
         JButton setting =
                 new JButton(getSoundText());
+
+        // =========================
+        // BUTTONS
+        // =========================
+        JButton start = createButton("START", onStart);
+        
+    	//1.4.1. Người chơi chọn chức năng xem điểm số trên giao diện.(khi ở màn hình bắt đầu game)
+        JButton leaderboard = createButton("LEADERBOARD", onLeaderboard);
+        JButton exit = createButton("EXIT", onExit);
+
 
         setting.setFont(new Font("Arial", Font.BOLD, 12));
 

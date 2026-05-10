@@ -502,76 +502,46 @@ public class GameView extends JPanel {
     // PAUSE SCREEN
     // =========================================================
 
-    private void drawPauseScreen(Graphics g) {
+     private void drawPauseScreen(Graphics g) {
 
         Graphics2D g2 = (Graphics2D) g;
 
         g2.setColor(new Color(0, 0, 0, 160));
-
         g2.fillRect(0, 0, getWidth(), getHeight());
 
-        int w = (int) (getWidth() * 0.75);
-        int h = (int) (getHeight() * 0.55);
+        int w = (int)(getWidth() * 0.75);
+        int h = (int)(getHeight() * 0.5);
 
         int x = (getWidth() - w) / 2;
         int y = (getHeight() - h) / 2;
 
         g2.setColor(Color.WHITE);
-
         g2.fillRoundRect(x, y, w, h, 25, 25);
 
         g2.setColor(Color.BLACK);
-
         g2.setFont(new Font("Arial", Font.BOLD, 20));
-
-        g2.drawString("PAUSED", x + 20, y + 35);
+        g2.drawString("PAUSED", x + 20, y + 30);
 
         int btnW = w - 40;
         int btnH = 40;
         int gap = 12;
 
-        resumeBtn =
-                new Rectangle(x + 20, y + 60, btnW, btnH);
+        resumeBtn = new Rectangle(x + 20, y + 60, btnW, btnH);
+        restartBtn = new Rectangle(x + 20, y + 60 + (btnH + gap), btnW, btnH);
+        homePauseBtn = new Rectangle(x + 20, y + 60 + (btnH + gap) * 2, btnW, btnH);
+        soundBtn = new Rectangle(x + 20, y + 60 + (btnH + gap) * 3, btnW, btnH);
+        musicBtn = new Rectangle(x + 20, y + 60 + (btnH + gap) * 4, btnW, btnH);
 
-        restartBtn =
-                new Rectangle(
-                        x + 20,
-                        y + 60 + btnH + gap,
-                        btnW,
-                        btnH
-                );
-
-        soundPauseBtn =
-                new Rectangle(
-                        x + 20,
-                        y + 60 + (btnH + gap) * 2,
-                        btnW,
-                        btnH
-                );
-
-        homePauseBtn =
-                new Rectangle(
-                        x + 20,
-                        y + 60 + (btnH + gap) * 3,
-                        btnW,
-                        btnH
-                );
 
         drawButton(g2, resumeBtn, "RESUME");
-
         drawButton(g2, restartBtn, "RESTART");
-
-        drawButton(
-                g2,
-                soundPauseBtn,
-                SoundManager.SOUND_ON
-                        ? "SOUND ON 🔊"
-                        : "SOUND OFF 🔇"
-        );
-
         drawButton(g2, homePauseBtn, "HOME");
-    }
+        drawButton(g2, soundBtn,
+                "SOUND: " + (SoundManager.SOUND_ON ? "ON" : "OFF"));
 
+        drawButton(g2, musicBtn,
+                "MUSIC: " + (SoundManager.MUSIC_ON ? "ON" : "OFF"));
+    }
     // =========================================================
     // GAME OVER
     // =========================================================

@@ -76,7 +76,7 @@ public abstract class FallingObject {
      */
     public void fall() {
 
-        // chỉ rơi khi đang FALLING
+        // [2.1.2] Vật thể rơi tự do xuống dưới theo trục Y bằng cách cộng dồn vận tốc
         if (state == State.FALLING) {
 
             y += speed;
@@ -103,7 +103,8 @@ public abstract class FallingObject {
      * @return true nếu DEAD
      */
     public boolean isDead() {
-
+        
+        // [2.1.7] Trả về true nếu vật thể chuyển sang trạng thái DEAD để GameModel tiến hành xóa khỏi bộ nhớ
         return state == State.DEAD;
     }
 
@@ -121,7 +122,7 @@ public abstract class FallingObject {
             return;
         }
 
-        // chuyển sang animation
+        // [2.1.4] & [2.1.7] Chuyển đổi trạng thái sang ANIMATING (Bắt đầu nổ/vỡ để chuẩn bị biến mất)
         state = State.ANIMATING;
 
         // xử lý riêng
@@ -137,8 +138,8 @@ public abstract class FallingObject {
         if (state != State.FALLING) {
             return;
         }
-
-        // chuyển sang animation
+        
+        // [2.2.1] & [2.1.7] Vật thể vượt qua giỏ hứng, chuyển trạng thái chạy hiệu ứng vỡ vụn dưới đáy màn hình
         state = State.ANIMATING;
 
         // xử lý riêng
@@ -149,7 +150,7 @@ public abstract class FallingObject {
      * kết thúc object
      */
     protected void finish() {
-
+        // [2.1.7] Chuyển đổi trạng thái cuối cùng sang DEAD để hệ thống hủy hoàn toàn
         state = State.DEAD;
     }
 

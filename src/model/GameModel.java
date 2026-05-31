@@ -153,6 +153,7 @@ public class GameModel {
 
         level = tick / 800 + 1;
 
+        // [2.1.1] Hệ thống tạo vật thể ngẫu nhiên (Egg, GoldenEgg, BadEgg, Bomb, Chicken) ở phía trên màn hình
         spawn();
 
         Iterator<FallingObject> it =
@@ -162,19 +163,19 @@ public class GameModel {
 
             FallingObject obj = it.next();
 
-            // rơi xuống
+             // [2.1.2] Vật thể rơi tự do xuống dưới theo trục Y
             obj.fall();
 
             // update animation
             obj.update(this);
 
-            // collision
+            // [2.1.4] Hệ thống kiểm tra va chạm giữa nhân vật và vật thể
             checkCollision(obj);
 
-            // miss
+            // [2.1.7] & [2.2.1] Kiểm tra khi vật thể lọt xuống cạnh đáy màn hình
             checkMiss(obj);
 
-            // remove object chết
+            // [2.1.7] Hệ thống hủy/remove object đã chết khỏi bộ nhớ
             if (obj.isDead()) {
 
                 it.remove();
@@ -219,9 +220,7 @@ public class GameModel {
 
             FallingObject obj;
 
-            // =====================================================
-            // RANDOM OBJECT
-            // =====================================================
+            /** [2.1.1] Khởi tạo ngẫu nhiên cụ thể từng thực thể loại vật thể */
             if (type < 50) {
 
                 obj = new Egg(lane);

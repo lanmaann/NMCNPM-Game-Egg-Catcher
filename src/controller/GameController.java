@@ -8,306 +8,180 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
 /**
- * =========================================================
- * GAME CONTROLLER
- * =========================================================
- * lớp điều khiển chính của game Egg Catcher
- *
- * chức năng:
- * - quản lý game loop
- * - xử lý input bàn phím
- * - điều khiển restart game
- * - cập nhật model
- * - phát âm thanh
- * =========================================================
+ * Game Controller
+ * Lớp điều khiển chính của game Egg Catcher.
+ * * Chức năng:
+ * - Quản lý game loop (vòng lặp trò chơi)
+ * - Xử lý input từ bàn phím người chơi
+ * - Điều khiển cơ chế restart game
+ * - Cập nhật dữ liệu cho Model
+ * - Phát tín hiệu âm thanh hệ thống
  */
 public class GameController {
-
-    // =========================================================
-    // MODEL + VIEW
-    // =========================================================
-
-    /**
-     * model quản lý dữ liệu và logic game
-     */
-    private GameModel model;
-
-    /**
-     * view hiển thị giao diện game
-     */
-    private final GameView view;
-
-    // =========================================================
-    // GAME LOOP
-    // =========================================================
-
-    /**
-     * thread chạy game loop
-     */
-    private Thread gameThread;
-
-    /**
-     * trạng thái game loop
-     */
-    private volatile boolean running = false;
-
-    // =========================================================
-    // INPUT
-    // =========================================================
-
-    /**
-     * bộ xử lý input bàn phím
-     */
-    private KeyAdapter keyHandler;
-
-    // =========================================================
-    // CONSTRUCTOR
-    // =========================================================
-
-    /**
-     * khởi tạo game controller
-     *
-     * @param model model game
-     * @param view giao diện game
-     */
-    public GameController(
-            GameModel model,
-            GameView view
-    ) {
-
-        this.model = model;
-        this.view = view;
-
-        // khởi tạo input
-        initInput();
-    }
-
-    // =========================================================
-    // START GAME LOOP
-    // =========================================================
-
-    /**
-     * bắt đầu game loop
-     */
-    public void start() {
-
-        // tránh chạy nhiều thread
-        if (running) {
-            return;
-        }
-
-        running = true;
-
-        // phát nhạc nền
-        SoundManager.playBackgroundMusic(
-                "/resources/music/bgm.wav"
-        );
-
-        /**
-         * game loop chính
-         */
-        gameThread = new Thread(() -> {
-
-            // FPS mục tiêu
-            final int FPS = 60;
-
-            // thời gian mỗi frame
-            final int frameTime = 1000 / FPS;
-
-            // loop game
-            while (running) {
-
-                long start =
-                        System.currentTimeMillis();
-
-                // chỉ update khi chưa pause/game over
-                if (
-                        !model.isPaused()
-                                &&
-                                !model.isGameOver()
-                ) {
-
-                    model.update();
-                }
-
-                // repaint giao diện
-                view.repaint();
-
-                // tính delay giữ FPS ổn định
-                long sleep =
-                        frameTime
-                                -
-                                (
-                                        System.currentTimeMillis()
-                                                - start
-                                );
-
-                if (sleep > 0) {
-
-                    try {
-
-                        Thread.sleep(sleep);
-
-                    } catch (InterruptedException e) {
-
-                        break;
-                    }
-                }
-            }
-        });
-
-        // chạy game thread
-        gameThread.start();
-    }
-
-    // =========================================================
-    // STOP GAME LOOP
-    // =========================================================
-
-    /**
-     * dừng game loop
-     */
-    public void stop() {
-
-        running = false;
-
-        // interrupt thread
-        if (gameThread != null) {
-
-            gameThread.interrupt();
-
-            gameThread = null;
-        }
-    }
-
-    // =========================================================
-    // INPUT
-    // =========================================================
-
-    /**
-     * khởi tạo input bàn phím
-     */
-    private void initInput() {
-
-        // cho phép focus
-        view.setFocusable(true);
-
-        /**
-         * tránh add nhiều listener
-         * khi restart
-         */
-        if (keyHandler != null) {
-
-            view.removeKeyListener(keyHandler);
-        }
-
-        // =====================================================
-        // KEY LISTENER
-        // =====================================================
-
-        keyHandler = new KeyAdapter() {
-
-            /**
-             * xử lý sự kiện nhấn phím
-             */
-            @Override
-            public void keyPressed(KeyEvent e) {
-
-                // không xử lý khi game over
-                if (model.isGameOver()) {
-                    return;
-                }
-
-                switch (e.getKeyCode()) {
-
-                    // =================================================
-                    // MOVE LEFT
-                    // =================================================
-                    case KeyEvent.VK_LEFT:
-
-                        model.getPlayer().moveLeft();
-
-                        SoundManager.playMove();
-
-                        break;
-
-                    // =================================================
-                    // MOVE RIGHT
-                    // =================================================
-                    case KeyEvent.VK_RIGHT:
-
-                        model.getPlayer().moveRight();
-
-                        SoundManager.playMove();
-
-                        break;
-
-                    // =================================================
-                    // PAUSE / RESUME
-                    // =================================================
-                    case KeyEvent.VK_P:
-
-                        model.togglePause();
-
-                        SoundManager.playUI();
-
-                        // pause -> stop nhạc
-                        if (model.isPaused()) {
-
-                            SoundManager.stopMusic();
-                        }
-
-                        // resume -> phát lại nhạc
-                        else {
-
-                            SoundManager.playBackgroundMusic(
-                                    "/resources/music/bgm.wav"
-                            );
-                        }
-
-                        break;
-
-                    // =================================================
-                    // RESTART
-                    // =================================================
-                    case KeyEvent.VK_R:
-
-                        restart();
-
-                        break;
-                }
-            }
-        };
-
-        // add listener
-        view.addKeyListener(keyHandler);
-
-        // focus nhận input
-        view.requestFocusInWindow();
-    }
-
-    // =========================================================
-    // RESTART
-    // =========================================================
-
-    /**
-     * restart game an toàn
-     */
-    public void restart() {
-
-        // dừng game loop hiện tại
-        stop();
-
-        // reset dữ liệu game
-        model.reset();
-
-        // phát âm thanh restart
-        SoundManager.playRestart();
-
-        // reset input
-        initInput();
-
-        // chạy lại game
-        start();
-    }
+	
+	/** Model quản lý dữ liệu và logic game */
+	private GameModel model;
+
+	/** View hiển thị giao diện game */
+	private final GameView view;
+
+	/** Thread chạy game loop độc lập */
+	private Thread gameThread;
+
+	/** Trạng thái kích hoạt của game loop */
+	private volatile boolean running = false;
+
+	/** Bộ xử lý sự kiện input bàn phím */
+	private KeyAdapter keyHandler;
+
+	/**
+	 * Khởi tạo Game Controller
+	 *
+	 * @param model model game
+	 * @param view  giao diện game
+	 */
+	public GameController(GameModel model, GameView view) {
+		this.model = model;
+		this.view = view;
+
+		// Khởi tạo hệ thống nhận diện phím bấm
+		initInput();
+	}
+
+	/** Bắt đầu vòng lặp Game Loop */
+	public void start() {
+		// Tránh việc khởi chạy trùng lặp nhiều Thread cùng lúc
+		if (running) {
+			return;
+		}
+
+		running = true;
+
+		// Phát nhạc nền hệ thống khi vào trận
+		SoundManager.playBackgroundMusic("/resources/music/bgm.wav");
+
+		/** Game Loop chính điều phối nhịp độ khung hình */
+		gameThread = new Thread(() -> {
+			// Thiết lập mức FPS mục tiêu ổn định ở 60
+			final int FPS = 60;
+
+			// Thời gian tiêu chuẩn quy định cho mỗi khung hình (ms)
+			final int frameTime = 1000 / FPS;
+
+			while (running) {
+				long start = System.currentTimeMillis();
+
+				// Chỉ cập nhật trạng thái logic khi trò chơi không bị tạm dừng hoặc kết thúc
+				if (!model.isPaused() && !model.isGameOver()) {
+					model.update();
+				}
+
+				// Ra lệnh vẽ lại toàn bộ giao diện đồ họa thế giới game
+				view.repaint();
+
+				// Tính toán thời gian nghỉ cần thiết để duy trì FPS ổn định
+				long sleep = frameTime - (System.currentTimeMillis() - start);
+
+				if (sleep > 0) {
+					try {
+						Thread.sleep(sleep);
+					} catch (InterruptedException e) {
+						break;
+					}
+				}
+			}
+		});
+
+		// Chạy tiến trình game thread
+		gameThread.start();
+	}
+
+	/** Dừng vòng lặp Game Loop */
+	public void stop() {
+		running = false;
+
+		// Giải phóng và ngắt luồng thread đang chạy nền
+		if (gameThread != null) {
+			gameThread.interrupt();
+			gameThread = null;
+		}
+	}
+
+	/** Khởi tạo cơ chế bắt sự kiện input bàn phím */
+	private void initInput() {
+		// Cho phép thành phần View nhận tiêu điểm tương tác từ hệ thống
+		view.setFocusable(true);
+
+		/** Ngăn ngừa việc tích tụ/trùng lặp nhiều Listener khi người chơi bấm Restart */
+		if (keyHandler != null) {
+			view.removeKeyListener(keyHandler);
+		}
+		
+		keyHandler = new KeyAdapter() {
+			/** Xử lý sự kiện nhấn phím vật lý */
+			@Override
+			public void keyPressed(KeyEvent e) {
+				// Đóng băng toàn bộ phím bấm điều khiển, không xử lý khi trò chơi đã kết thúc
+				if (model.isGameOver()) {
+					return;
+				}
+
+				switch (e.getKeyCode()) {
+				case KeyEvent.VK_LEFT:
+					// [2.1.3] Người chơi điều khiển nhân vật di chuyển sang trái theo trục X
+					model.getPlayer().moveLeft();
+					SoundManager.playMove();
+					break;
+
+				case KeyEvent.VK_RIGHT:
+					// [2.1.3] Người chơi điều khiển nhân vật di chuyển sang phải theo trục X
+					model.getPlayer().moveRight();
+					SoundManager.playMove();
+					break;
+
+				case KeyEvent.VK_P:
+					model.togglePause();
+					SoundManager.playUI();
+
+					// Trạng thái Pause hoạt động -> Tạm dừng nhạc nền game
+					if (model.isPaused()) {
+						SoundManager.stopMusic();
+					}
+					// Trạng thái Resume hoạt động -> Tiếp tục phát lại nhạc nền
+					else {
+						SoundManager.playBackgroundMusic("/resources/music/bgm.wav");
+					}
+					break;
+
+				case KeyEvent.VK_R:
+					restart();
+					break;
+				}
+			}
+		};
+
+		// Đăng ký bộ lắng nghe phím bấm vào View
+		view.addKeyListener(keyHandler);
+
+		// Yêu cầu cửa sổ nhận quyền focus trực tiếp để đón nhận tín hiệu input hiệu quả nhất
+		view.requestFocusInWindow();
+	}
+
+    /** Tái khởi động lại trò chơi an toàn */
+	public void restart() {
+		// Dừng vòng lặp game loop hiện tại để làm sạch tiến trình
+		stop();
+
+		// Làm mới và đặt lại toàn bộ các tham số dữ liệu trong Model
+		model.reset();
+
+		// Kích hoạt hiệu ứng âm thanh tái khởi động
+		SoundManager.playRestart();
+
+		// Làm mới bộ thu thập tín hiệu đầu vào từ thiết bị ngoại vi
+		initInput();
+
+		// Khởi chạy vòng lặp luồng game mới
+		start();
+	}
 }

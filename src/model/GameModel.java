@@ -3,17 +3,12 @@ package model;
 import java.util.*;
 
 /**
- * =========================================================
- * GAME MODEL
- * =========================================================
- * lớp quản lý toàn bộ dữ liệu và logic game
- * =========================================================
+ * Game Model
+ * Lớp quản lý toàn bộ dữ liệu và logic của trò chơi.
  */
 public class GameModel {
 
-    // =========================================================
-    // PLAYER STATE
-    // =========================================================
+    /** Player State */
     private Player player;
 
     private int score = 0;
@@ -25,76 +20,51 @@ public class GameModel {
     private int tick = 0;
     private int level = 1;
 
-    // =========================================================
-    // SCREEN
-    // =========================================================
+    /** Screen */
     private int screenHeight = 600;
 
-    // =========================================================
-    // TIME SYSTEM
-    // =========================================================
+    /** Time System */
     private long startTime = System.currentTimeMillis();
     private long frozenTime = 0;
 
-    // =========================================================
-    // OBJECT SYSTEM
-    // =========================================================
+    /** Object System */
     private final Random rand = new Random();
 
-    private final ArrayList<FallingObject> objects =
-            new ArrayList<>();
+    private final ArrayList<FallingObject> objects = new ArrayList<>();
 
     public static final int LANE_COUNT = 5;
 
-    // =========================================================
-    // SPAWN SYSTEM
-    // =========================================================
+    /** Spawn System */
     private int spawnCooldown = 0;
 
-    // =========================================================
-    // SOUND
-    // =========================================================
+    /** Sound */
     private boolean soundEnabled = true;
 
-    // =========================================================
-    // INIT
-    // =========================================================
+    /** Init */
     public GameModel() {
-
         player = new Player(LANE_COUNT);
     }
 
-    // =========================================================
-    // SCREEN SYNC
-    // =========================================================
+    /** Screen Sync */
     public void setScreenHeight(int h) {
-
         this.screenHeight = h;
     }
 
     public int getPlayerY() {
-
         return (int)(screenHeight * 0.82f);
     }
 
-    // =========================================================
-    // SOUND
-    // =========================================================
+    /** Sound Configuration */
     public void setSoundEnabled(boolean s) {
-
         this.soundEnabled = s;
     }
 
     public boolean isSoundEnabled() {
-
         return soundEnabled;
     }
 
-    // =========================================================
-    // RESET
-    // =========================================================
+    /** Reset */
     public void reset() {
-
         score = 0;
         lives = 3;
 
@@ -108,62 +78,46 @@ public class GameModel {
         frozenTime = 0;
 
         objects.clear();
-
         spawnCooldown = 0;
     }
 
-    // =========================================================
-    // PAUSE
-    // =========================================================
+    /** Pause */
     public void togglePause() {
-
         paused = !paused;
 
         if (paused) {
-
             frozenTime = System.currentTimeMillis();
-        }
-
-        else {
-
-            startTime +=
-                    System.currentTimeMillis()
-                            - frozenTime;
+        } else {
+            startTime += System.currentTimeMillis() - frozenTime;
         }
     }
 
     public boolean isPaused() {
-
         return paused;
     }
 
     private void freezeTime() {
-
         frozenTime = System.currentTimeMillis();
     }
 
-    // =========================================================
-    // UPDATE LOOP
-    // =========================================================
+    /**
+     * Hàm cập nhật trạng thái game theo từng khung hình của Game Loop
+     */
     public void update() {
-
         if (gameOver || paused) return;
 
         tick++;
-
         level = tick / 800 + 1;
 
         // [2.1.1] Hệ thống tạo vật thể ngẫu nhiên (Egg, GoldenEgg, BadEgg, Bomb, Chicken) ở phía trên màn hình
         spawn();
 
-        Iterator<FallingObject> it =
-                objects.iterator();
+        Iterator<FallingObject> it = objects.iterator();
 
         while (it.hasNext()) {
-
             FallingObject obj = it.next();
 
-             // [2.1.2] Vật thể rơi tự do xuống dưới theo trục Y
+            // [2.1.2] Vật thể rơi tự do xuống dưới theo trục Y
             obj.fall();
 
             // update animation
@@ -177,314 +131,210 @@ public class GameModel {
 
             // [2.1.7] Hệ thống hủy/remove object đã chết khỏi bộ nhớ
             if (obj.isDead()) {
-
                 it.remove();
             }
         }
     }
 
-    // =========================================================
-    // SPAWN
-    // =========================================================
+    /** Spawn Logic */
     private void spawn() {
-
         if (spawnCooldown > 0) {
-
             spawnCooldown--;
-
             return;
         }
 
         // tránh spawn quá sát
         if (!objects.isEmpty()) {
-
-            FallingObject last =
-                    objects.get(objects.size() - 1);
-
+            FallingObject last = objects.get(objects.size() - 1);
             if (last.getY() < screenHeight * 0.2f) {
-
                 return;
             }
         }
 
-        int rate =
-                Math.max(25, 60 - level * 4);
+        int rate = Math.max(25, 60 - level * 4);
 
         if (rand.nextInt(rate) == 0) {
-
-            int lane =
-                    rand.nextInt(LANE_COUNT);
-
-            int type =
-                    rand.nextInt(100);
-
+            int lane = rand.nextInt(LANE_COUNT);
+            int type = rand.nextInt(100);
             FallingObject obj;
 
             /** [2.1.1] Khởi tạo ngẫu nhiên cụ thể từng thực thể loại vật thể */
             if (type < 50) {
-
                 obj = new Egg(lane);
-            }
-
-            else if (type < 75) {
-
+            } else if (type < 75) {
                 obj = new BadEgg(lane);
-            }
-
-            else if (type < 90) {
-
+            } else if (type < 90) {
                 obj = new Bomb(lane);
-            }
-
-            else if (type < 97) {
-
+            } else if (type < 97) {
                 obj = new GoldenEgg(lane);
-            }
-
-            else {
-
+            } else {
                 obj = new Chicken(lane);
             }
 
             // tăng tốc độ theo level
-            obj.setSpeed(
-                    Math.min(10, 3 + level / 2f)
-            );
-
+            obj.setSpeed(Math.min(10, 3 + level / 2f));
             objects.add(obj);
-
             spawnCooldown = 18;
         }
     }
 
-    // =========================================================
-    // COLLISION
-    // =========================================================
+    /** Collision Logic */
     private void checkCollision(FallingObject obj) {
-
         if (!obj.isFalling()) return;
 
         int playerY = getPlayerY();
-
-        int tolerance =
-                (int)(screenHeight * 0.025f);
+        int tolerance = (int)(screenHeight * 0.025f);
 
         // bomb hitbox to hơn
         if (obj instanceof Bomb) {
-
             tolerance *= 1.4;
         }
 
-        boolean collide =
-                obj.getLane() == player.getLane()
-                        &&
-                        obj.getY()
-                                >= playerY - tolerance
-                        &&
-                        obj.getY()
-                                <= playerY + tolerance;
+        // [2.1.4] Thuật toán so khớp tọa độ Lane (Trục X) và khoảng cách Y (Hitbox)
+        boolean collide = obj.getLane() == player.getLane()
+                && obj.getY() >= playerY - tolerance
+                && obj.getY() <= playerY + tolerance;
 
         if (collide) {
-
+            // [2.1.7] Kích hoạt trạng thái chuyển đổi biến mất của vật thể (bắt đầu nổ hoặc vỡ)
             obj.catchObject();
 
+            // Áp dụng luật tính điểm/trừ mạng khi va chạm thành công
             applyRule(obj, true);
         }
     }
 
-    // =========================================================
-    // MISS
-    // =========================================================
+    /** Miss Logic */
     private void checkMiss(FallingObject obj) {
-
         if (!obj.isFalling()) return;
 
         int playerY = getPlayerY();
 
-        if (
-                obj.getY()
-                        >
-                        playerY
-                                + screenHeight * 0.04f
-        ) {
-
+        // [2.1.7] & [2.2.1] Xác định vật thể vượt quá tầm giỏ hứng (Rơi khỏi cạnh dưới)
+        if (obj.getY() > playerY + screenHeight * 0.04f) {
+            // [2.1.7] Đánh dấu vật thể vỡ vụn dưới đất để chuẩn bị hủy
             obj.missObject();
 
+            // Áp dụng luật phạt lọt lưới
             applyRule(obj, false);
         }
     }
 
-    // =========================================================
-    // GAME RULE
-    // =========================================================
-    private void applyRule(
-            FallingObject obj,
-            boolean caught
-    ) {
-
-        // =====================================================
-        // EGG
-        // =====================================================
+    /** Game Rules Processing */
+    private void applyRule(FallingObject obj, boolean caught) {
+        
+        /** [2.1.5] XỬ LÝ ĐỐI TƯỢNG TRỨNG THƯỜNG (EGG) */
         if (obj instanceof Egg) {
-
             if (caught) {
-
                 score++;
-
                 if (soundEnabled) {
                     util.SoundManager.playCatch();
                 }
-            }
-
-            else {
-
+            } else {
                 lives--;
-
                 if (soundEnabled) {
                     util.SoundManager.playBreak();
                 }
             }
         }
 
-        // =====================================================
-        // BAD EGG
-        // =====================================================
+        /** XỬ LÝ ĐỐI TƯỢNG TRỨNG THỐI (BAD EGG) */
         else if (obj instanceof BadEgg) {
-
             if (caught) {
-
                 score--;
             }
+            // Thỏa mãn [2.2.1]: Nếu người chơi né tránh thành công (lọt lưới), hệ thống hủy vật thể và không trừ mạng.
         }
 
-        // =====================================================
-        // BOMB
-        // =====================================================
+        /** [2.1.6] XỬ LÝ ĐỐI TƯỢNG CHƯỚNG NGẠI VẬT: BOM (BOMB) */
         else if (obj instanceof Bomb) {
-
             if (caught) {
-
                 lives--;
-
                 if (soundEnabled) {
                     util.SoundManager.playExplosion();
                 }
             }
+            // Thỏa mãn [2.2.1]: Người chơi né thành công Quả Bom rơi xuống cạnh dưới -> Hệ thống hủy vật thể và không trừ mạng.
         }
 
-        // =====================================================
-        // GOLDEN EGG
-        // =====================================================
+        /** [2.2.2] NGƯỜI CHƠI HỨNG ĐƯỢC TRỨNG VÀNG (GOLDEN EGG) */
         else if (obj instanceof GoldenEgg) {
-
             if (caught) {
-
                 score += 5;
-
                 if (soundEnabled) {
                     util.SoundManager.playGold();
                 }
             }
         }
 
-        // =====================================================
-        // CHICKEN
-        // =====================================================
+        /** [2.1.6] XỬ LÝ ĐỐI TƯỢNG CHƯỚNG NGẠI VẬT: CON GÀ (CHICKEN) */
         else if (obj instanceof Chicken) {
-
             if (caught) {
-
                 lives--;
-
                 if (soundEnabled) {
                     util.SoundManager.playChicken();
                 }
             }
+            // Thỏa mãn [2.2.1]: Người chơi né thành công Con Gà rơi xuống cạnh dưới -> Hệ thống hủy vật thể và không trừ mạng.
         }
 
-        // không cho điểm âm
+        // Không cho điểm số hiển thị số âm
         if (score < 0) {
-
             score = 0;
         }
 
-        // =====================================================
-        // GAME OVER
-        // =====================================================
+        /** [2.2.3] SỐ MẠNG VỀ BẰNG 0 (MẤT MẠNG CUỐI CÙNG) */
         if (lives <= 0) {
-
             lives = 0;
-
             gameOver = true;
 
+            // Đóng băng bộ đếm thời gian sống sót
             freezeTime();
 
             if (soundEnabled) {
-
-                util.SoundManager.playGameOverMusic(
-                        "/resources/music/gameover.wav"
-                );
+                util.SoundManager.playGameOverMusic("/resources/music/gameover.wav");
             }
 
-            RecordManager.add(
-                    score,
-                    getTimeSurvived()
-            );
+            // [2.2.3] Gọi tiến trình lưu trữ dữ liệu điểm số cuối cùng vào file kỉ lục
+            RecordManager.add(score, getTimeSurvived());
         }
     }
 
-    // =========================================================
-    // TIME
-    // =========================================================
+    /** Time Processing */
     public int getTimeSurvived() {
-
         long current;
 
         if (gameOver || paused) {
-
             current = frozenTime;
-        }
-
-        else {
-
+        } else {
             current = System.currentTimeMillis();
         }
 
-        return (int)(
-                (current - startTime) / 1000
-        );
+        return (int)((current - startTime) / 1000);
     }
 
-    // =========================================================
-    // GETTERS
-    // =========================================================
+    /** Getters */
     public Player getPlayer() {
-
         return player;
     }
 
     public ArrayList<FallingObject> getObjects() {
-
         return objects;
     }
 
     public int getScore() {
-
         return score;
     }
 
     public int getLives() {
-
         return lives;
     }
 
     public int getLevel() {
-
         return level;
     }
 
     public boolean isGameOver() {
-
         return gameOver;
     }
 }

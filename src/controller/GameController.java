@@ -167,7 +167,7 @@ public class GameController {
 		view.requestFocusInWindow();
 	}
 
-    /** Tái khởi động lại trò chơi an toàn */
+	/** Tái khởi động lại trò chơi an toàn */
 	public void restart() {
 		// Dừng vòng lặp game loop hiện tại để làm sạch tiến trình
 		stop();

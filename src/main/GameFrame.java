@@ -8,9 +8,6 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
- * =========================================================
- * GAME FRAME - RESPONSIVE SCREEN MANAGER
- * =========================================================
  * lớp chính quản lý toàn bộ giao diện game
  * 
  * chức năng:
@@ -18,7 +15,6 @@ import java.awt.*;
  * - khởi tạo game
  * - điều khiển controller
  * - quản lý responsive window
- * =========================================================
  */
 public class GameFrame extends JFrame {
 

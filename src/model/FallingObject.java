@@ -3,121 +3,64 @@ package model;
 import java.awt.Graphics;
 
 /**
- * =========================================================
- * FALLING OBJECT
- * =========================================================
- * lớp abstract đại diện cho mọi vật thể rơi trong game
- *
- * các object kế thừa:
- * - Egg
- * - BadEgg
- * - Bomb
- * - Chicken
- *
- * chức năng:
- * - quản lý lane
- * - quản lý vị trí rơi
- * - quản lý tốc độ
- * - quản lý trạng thái object
- * - cung cấp logic chung cho object rơi
- * =========================================================
+ * Falling Object
+ * Lớp trừu tượng (abstract) đại diện cho mọi vật thể rơi trong hệ thống game.
+ * * Các object kế thừa:
+ * - Egg (Trứng thường)
+ * - GoldenEgg (Trứng vàng)
+ * - BadEgg (Trứng thối)
+ * - Bomb (Quả bom)
+ * - Chicken (Con gà)
+ * * Chức năng chính:
+ * - Quản lý chỉ số Lane (Làn đường rơi)
+ * - Quản lý vị trí tọa độ rơi tự do
+ * - Điều phối vận tốc rơi theo cấp độ trò chơi
+ * - Quản lý vòng đời và trạng thái (State) của vật thể
  */
 public abstract class FallingObject {
 
-    // =========================================================
-    // POSITION
-    // =========================================================
-
-    /**
-     * lane hiện tại của object
-     */
+    /** Position State */
     protected int lane;
 
-    /**
-     * vị trí Y của object
-     * dùng float để di chuyển mượt hơn
-     */
+    /** Vị trí Y của vật thể (sử dụng float để tăng độ mượt mà khi dịch chuyển) */
     protected float y = 0;
 
-    /**
-     * tốc độ rơi (pixel/frame)
-     */
+    /** Tốc độ rơi tịnh tiến (tính theo pixel/frame) */
     protected float speed = 5f;
 
-    // =========================================================
-    // STATE
-    // =========================================================
-
-    /**
-     * trạng thái hiện tại của object
-     */
+    /** Object State Lifecycle */
     protected State state = State.FALLING;
 
-    // =========================================================
-    // CONSTRUCTOR
-    // =========================================================
-
     /**
-     * khởi tạo object theo lane
+     * Khởi tạo vật thể theo làn đường (Lane) được chỉ định
      *
-     * @param lane lane spawn object
+     * @param lane làn đường mà vật thể sẽ xuất hiện (spawn)
      */
     public FallingObject(int lane) {
-
         this.lane = lane;
     }
 
-    // =========================================================
-    // MOVE
-    // =========================================================
-
-    /**
-     * xử lý object rơi xuống
-     */
+    /** Object Movement Logic */
     public void fall() {
-
         // [2.1.2] Vật thể rơi tự do xuống dưới theo trục Y bằng cách cộng dồn vận tốc
         if (state == State.FALLING) {
-
             y += speed;
         }
     }
 
-    // =========================================================
-    // STATE CHECK
-    // =========================================================
-
-    /**
-     * kiểm tra object có đang rơi không
-     *
-     * @return true nếu đang FALLING
-     */
+    /** State Verification Utilities */
     public boolean isFalling() {
-
         return state == State.FALLING;
     }
 
-    /**
-     * kiểm tra object đã chết chưa
-     *
-     * @return true nếu DEAD
-     */
     public boolean isDead() {
-        
         // [2.1.7] Trả về true nếu vật thể chuyển sang trạng thái DEAD để GameModel tiến hành xóa khỏi bộ nhớ
         return state == State.DEAD;
     }
 
-    // =========================================================
-    // STATE TRANSITION
-    // =========================================================
-
-    /**
-     * xử lý khi object được hứng
-     */
+    /** State Transition Triggers */
     public final void catchObject() {
-
-        // tránh xử lý nhiều lần
+        // Ngăn chặn việc bắt trùng lặp sự kiện nhiều lần khi đang chạy hiệu ứng
         if (state != State.FALLING) {
             return;
         }
@@ -125,111 +68,62 @@ public abstract class FallingObject {
         // [2.1.4] & [2.1.7] Chuyển đổi trạng thái sang ANIMATING (Bắt đầu nổ/vỡ để chuẩn bị biến mất)
         state = State.ANIMATING;
 
-        // xử lý riêng
+        // Kích hoạt hàm xử lý đặc trưng của từng lớp con kế thừa
         onCatch();
     }
 
-    /**
-     * xử lý khi object rơi hụt
-     */
     public final void missObject() {
-
-        // tránh xử lý nhiều lần
+        // Ngăn chặn việc bắt trùng lặp sự kiện nhiều lần khi đang chạy hiệu ứng
         if (state != State.FALLING) {
             return;
         }
-        
+
         // [2.2.1] & [2.1.7] Vật thể vượt qua giỏ hứng, chuyển trạng thái chạy hiệu ứng vỡ vụn dưới đáy màn hình
         state = State.ANIMATING;
 
-        // xử lý riêng
+        // Kích hoạt hàm xử lý rơi hụt của từng lớp con kế thừa
         onMiss();
     }
 
     /**
-     * kết thúc object
+     * Kết thúc vòng đời của vật thể, đánh dấu sẵn sàng giải phóng
      */
     protected void finish() {
         // [2.1.7] Chuyển đổi trạng thái cuối cùng sang DEAD để hệ thống hủy hoàn toàn
         state = State.DEAD;
     }
 
-    // =========================================================
-    // GETTER / SETTER
-    // =========================================================
-
-    /**
-     * lấy lane hiện tại
-     *
-     * @return lane
-     */
+    /** Getters / Setters */
     public int getLane() {
-
         return lane;
     }
 
-    /**
-     * lấy vị trí Y
-     *
-     * @return vị trí y dạng int
-     */
     public int getY() {
-
-        // ép float -> int khi sử dụng
+        // Ép kiểu dữ liệu một cách an toàn từ float về int phục vụ hiển thị đồ họa
         return (int) y;
     }
 
-    /**
-     * set tốc độ rơi
-     *
-     * @param speed tốc độ mới
-     */
     public void setSpeed(float speed) {
-
         this.speed = speed;
     }
 
-    /**
-     * lấy trạng thái hiện tại
-     *
-     * @return state hiện tại
-     */
     public State getState() {
-
         return state;
     }
 
-    // =========================================================
-    // ABSTRACT METHODS
-    // =========================================================
-
-    /**
-     * cập nhật object
-     *
-     * @param model game model
-     */
+    /** Abstract Methods Contracts */
     public abstract void update(GameModel model);
 
-    /**
-     * xử lý khi object được hứng
-     */
     public abstract void onCatch();
 
-    /**
-     * xử lý khi object rơi hụt
-     */
     public abstract void onMiss();
 
     /**
-     * vẽ object lên màn hình
+     * Thực hiện tác vụ vẽ đồ họa vật thể lên màn hình ứng dụng
      *
-     * @param g graphics
-     * @param centerX vị trí giữa lane
-     * @param laneWidth chiều rộng lane
+     * @param g         đối tượng Graphics nhận dạng đồ họa từ Canvas
+     * @param centerX   vị trí tọa độ trung tâm của làn đường hiện tại
+     * @param laneWidth độ rộng tiêu chuẩn của làn đường
      */
-    public abstract void draw(
-            Graphics g,
-            int centerX,
-            int laneWidth
-    );
+    public abstract void draw(Graphics g, int centerX, int laneWidth);
 }

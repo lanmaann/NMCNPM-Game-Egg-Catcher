@@ -1,113 +1,92 @@
 package view;
 
 import model.*;
-import model.RecordManager;
-import model.Record;
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import util.ImageLoader;
 import util.SoundManager;
+import util.ThemeManager;
 
 /**
  * Game View
- * Giao diện đồ họa chính của trò chơi Egg Catcher.
- * * Chức năng:
- * - Hiển thị nền (Background), làn đường (Lane), nhân vật hứng và các vật thể rơi.
- * - Hiển thị bảng HUD thông tin (Score, Best Score, Lives, Time).
- * - Xử lý tương tác chuột cho hệ thống nút nhấn: Pause, Replay, Home, Records.
- * - Thiết kế giao diện phủ màn hình Tạm dừng (Pause) và Kết thúc (Game Over).
- * - Tích hợp bộ chuyển đổi bật/tắt âm thanh hệ thống.
+ * Giao diện hiển thị trực tiếp và xử lý vòng lặp đồ họa runtime của trò chơi Egg Catcher.
+ * * Chức năng nâng cao:
+ * - Vẽ môi trường, HUD, người chơi và các vật thể rơi.
+ * - Hiển thị Pop-up Settings lồng ngay trên màn hình tạm dừng (Pause Screen).
+ * - Đồng bộ hóa Volume Sliders tuyến tính (0-100%) và chuyển đổi Dark Mode thời gian thực.
  */
 public class GameView extends JPanel {
 
-    /** Model + Navigation Callbacks */
     private GameModel model;
     private Runnable onHome;
     private Runnable onRecords;
 
-    /** Top Controls HUD Buttons */
+    // Vùng tương tác các nút bấm màn hình chính
     private Rectangle pauseBtn = new Rectangle();
-
-    /** Game Over Screen Buttons */
     private Rectangle recordBtn = new Rectangle();
     private Rectangle homeBtn = new Rectangle();
     private Rectangle replayBtn = new Rectangle();
-   
-    /** Pause Overlay Screen Buttons */
+    
+    // Vùng tương tác các nút bấm trên màn hình Pause
     private Rectangle resumeBtn = new Rectangle();
     private Rectangle restartBtn = new Rectangle();
     private Rectangle homePauseBtn = new Rectangle();
-    private Rectangle soundBtn = new Rectangle();
-    private Rectangle musicBtn = new Rectangle();
+    private Rectangle settingPauseBtn = new Rectangle(); // Nút Settings mới thay thế nút Sound/Music ON-OFF cũ
 
-    /** Animation & Hover State */
     private boolean hoverPause = false;
-
-    /** Advertisements / Sponsor System */
     private Image gameOverAd;
 
     /**
-     * Khởi tạo giao diện đồ họa Game View
-     *
-     * @param model     mô hình quản lý dữ liệu gốc
-     * @param onHome    hành động chuyển hướng về màn hình chính
-     * @param onRecords hành động chuyển hướng xem bảng kỷ lục
+     * Constructor khởi tạo Game View.
      */
     public GameView(GameModel model, Runnable onHome, Runnable onRecords) {
         this.model = model;
         this.onHome = onHome;
         this.onRecords = onRecords;
 
-        setBackground(new Color(245, 248, 255));
         setFocusable(true);
-        
-        // Tải tài nguyên hình ảnh quảng cáo hiển thị khi thua trận
         gameOverAd = ImageLoader.load("/resources/ads/ad1.png");
 
-        // Đăng ký bộ lắng nghe sự kiện từ chuột
         initMouse();
     }
 
-    /** Input Mouse Listeners */
+    /**
+     * Khởi tạo và liên kết các sự kiện tương tác chuột.
+     */
     private void initMouse() {
         addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
                 Point p = e.getPoint();
 
-                /** Top Navigation Buttons Processing */
+                // 1. XỬ LÝ NÚT TẠM DỪNG (PAUSE BUTTON) Ở HUD TOP
                 if (pauseBtn.contains(p)) {
                     model.togglePause();
-
-                    if (SoundManager.SOUND_ON) {
-                        SoundManager.playUI();
-                    }
+                    SoundManager.playUI();
 
                     if (model.isPaused()) {
                         SoundManager.stopMusic();
                     } else {
-                        SoundManager.playMusic("/resources/music/bgm.wav");
+                        SoundManager.playGameOverMusic("/resources/music/bgm.wav");
                     }
+                    repaint();
                     return;
                 }
 
-                /** Pause Screen Overlay Buttons Processing */
+                // 2. XỬ LÝ TƯƠNG TÁC TRÊN MÀN HÌNH TẠM DỪNG (PAUSE SCREEN)
                 if (model.isPaused()) {
                     if (resumeBtn.contains(p)) {
                         model.togglePause();
-                        if (SoundManager.MUSIC_ON) {
-                            SoundManager.playMusic("/resources/music/bgm.wav");
-                        }
+                        SoundManager.playGameOverMusic("/resources/music/bgm.wav");
+                        repaint();
                         return;
                     }
-                    
+
                     if (restartBtn.contains(p)) {
                         model.reset();
-                        if (SoundManager.MUSIC_ON) {
-                            SoundManager.playMusic("/resources/music/bgm.wav");
-                        }
+                        SoundManager.playGameOverMusic("/resources/music/bgm.wav");
+                        repaint();
                         return;
                     }
 
@@ -116,48 +95,34 @@ public class GameView extends JPanel {
                         return;
                     }
 
-                    if (soundBtn.contains(p)) {
-                        SoundManager.SOUND_ON = !SoundManager.SOUND_ON;
+                    // [3.1.1] Người chơi click chọn nút settings lồng trên màn hình pause
+                    if (settingPauseBtn.contains(p)) {
+                        showEmbeddedSettingsDialog();
                         return;
                     }
-
-                    if (musicBtn.contains(p)) {
-                        SoundManager.MUSIC_ON = !SoundManager.MUSIC_ON;
-                        if (!SoundManager.MUSIC_ON) {
-                            SoundManager.stopMusic();
-                        } else {
-                            SoundManager.playMusic("/resources/music/bgm.wav");
-                        }
-                        return;
-                    }
-
-                    model.togglePause();
                     return;
                 }
 
-                /** Game Over Screen Buttons Processing */
+                // 3. XỬ LÝ TƯƠNG TÁC KHI THUA CUỘC (GAME OVER SCREEN)
                 if (model.isGameOver()) {
-                    if (recordBtn.contains(p) && onRecords != null) {
-                        onRecords.run();
-                    }
                     if (replayBtn.contains(p)) {
                         model.reset();
-                        if (SoundManager.MUSIC_ON) {
-                            SoundManager.playMusic("/resources/music/bgm.wav");
-                        }
+                        SoundManager.playGameOverMusic("/resources/music/bgm.wav");
+                        repaint();
                         return;
                     }
                     if (homeBtn.contains(p) && onHome != null) {
                         onHome.run();
+                        return;
                     }
                     if (recordBtn.contains(p) && onRecords != null) {
                         onRecords.run();
+                        return;
                     }
                 }
             }
         });
 
-        /** Motion Hover Interactive Tracking */
         addMouseMotionListener(new MouseMotionAdapter() {
             @Override
             public void mouseMoved(MouseEvent e) {
@@ -167,15 +132,74 @@ public class GameView extends JPanel {
         });
     }
 
-    /** Paint Rendering Pipeline */
+    /**
+     * Triển khai xuất hộp thoại cấu hình nâng cao tích hợp Volume Sliders và Dark Mode Switch.
+     */
+    private void showEmbeddedSettingsDialog() {
+        // Tạo thanh trượt Volume cho Nhạc nền
+        JSlider musicSlider = new JSlider(JSlider.HORIZONTAL, 0, 100, SoundManager.MUSIC_VOLUME);
+        musicSlider.setMajorTickSpacing(25);
+        musicSlider.setPaintTicks(true);
+        musicSlider.setPaintLabels(true);
+
+        // Tạo thanh trượt Volume cho Hiệu ứng âm thanh (SFX)
+        JSlider sfxSlider = new JSlider(JSlider.HORIZONTAL, 0, 100, SoundManager.SOUND_VOLUME);
+        sfxSlider.setMajorTickSpacing(25);
+        sfxSlider.setPaintTicks(true);
+        sfxSlider.setPaintLabels(true);
+
+        // Tạo Checkbox tùy chọn giao diện tối
+        JCheckBox darkModeCheck = new JCheckBox("Enable Dark Mode", ThemeManager.IS_DARK_MODE);
+
+        JTextArea guide = new JTextArea("HOW TO PLAY\n\n← → : Move Basket\nCatch eggs, avoid bombs.\nP : Pause Game | R : Restart Match");
+        guide.setEditable(false);
+        guide.setFont(new Font("Arial", Font.PLAIN, 12));
+        guide.setBackground(new Color(235, 235, 235));
+
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        
+        panel.add(new JLabel("Background Music Volume:"));
+        panel.add(musicSlider);
+        panel.add(Box.createVerticalStrut(10));
+        panel.add(new JLabel("Sound Effects Volume:"));
+        panel.add(sfxSlider);
+        panel.add(Box.createVerticalStrut(10));
+        panel.add(darkModeCheck);
+        panel.add(Box.createVerticalStrut(15));
+        panel.add(new JLabel("Game Control Guide:"));
+        panel.add(new JScrollPane(guide));
+
+        // [3.1.2] Treo luồng dựng form lồng lên trên màn hình đồ họa gameview hiện thời
+        int result = JOptionPane.showConfirmDialog(
+                this, panel, "In-Game Settings",
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE
+        );
+        
+        // [3.1.3] Nhận tín hiệu tương tác hành động click từ người chơi
+        // [3.1.4 alt] Nhánh chấp thuận lưu cấu hình (Người chơi bấm OK)
+        if (result == JOptionPane.OK_OPTION) {
+            // Lưu dữ liệu phần trăm mới vào core sound
+            SoundManager.MUSIC_VOLUME = musicSlider.getValue();
+            SoundManager.SOUND_VOLUME = sfxSlider.getValue();
+            
+            // Ép hệ thống âm thanh cập nhật cường độ decibel lập tức
+            SoundManager.updateMusicVolume();
+
+            // Cập nhật cấu hình Dark Mode
+            ThemeManager.IS_DARK_MODE = darkModeCheck.isSelected();
+            
+         // [3.1.4 alt] Vẽ lại toàn bộ màn hình để áp màu sắc giao diện mới            
+            repaint();
+        }
+     // [3.2.1 else] Nhánh hủy bỏ (Bấm Cancel hoặc dấu X) tự động đóng dialog, giữ nguyên biến tĩnh
+    }
+
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-
-        // Đồng bộ hóa độ cao màn hình hiện tại vào trong Model logic
         model.setScreenHeight(getHeight());
 
-        // Thực hiện tuần tự các bước vẽ đè giao diện nền tảng
         drawBackground(g);
         drawLane(g);
         drawObjects(g);
@@ -183,28 +207,17 @@ public class GameView extends JPanel {
         drawHUD(g);
         drawTopButtons(g);
 
-        // Hiển thị lớp giao diện phủ tầng trên cùng tùy theo trạng thái trò chơi
-        if (model.isPaused()) {
-            drawPauseScreen(g);
-        }
-        
-        if (model.isGameOver()) {
-            // [2.2.3] Nhận diện trạng thái gameOver = true để kích hoạt màn hình kết quả lên tầng trên cùng
-            drawGameOver(g);
-        }
+        if (model.isPaused()) drawPauseScreen(g);
+        if (model.isGameOver()) drawGameOver(g);
     }
 
-    /** Background Graphics Graphic Rendering */
     private void drawBackground(Graphics g) {
         Graphics2D g2 = (Graphics2D) g;
-        g2.setPaint(new GradientPaint(
-                0, 0, new Color(245, 248, 255),
-                0, getHeight(), new Color(190, 210, 255)
-        ));
+        // Tự động điều chỉnh màu nền đồng bộ theo ThemeManager sáng/tối hiện thời
+        g2.setPaint(new GradientPaint(0, 0, ThemeManager.getBgStart(), 0, getHeight(), ThemeManager.getBgEnd()));
         g2.fillRect(0, 0, getWidth(), getHeight());
     }
 
-    /** Lane Layout Dimensions Logic */
     private int laneWidth() {
         return getWidth() / GameModel.LANE_COUNT;
     }
@@ -214,202 +227,142 @@ public class GameView extends JPanel {
     }
 
     private void drawLane(Graphics g) {
-        g.setColor(new Color(0, 0, 0, 25));
+        // Màu đường phân làn động thích ứng theo Dark Mode
+        g.setColor(ThemeManager.IS_DARK_MODE ? new Color(255, 255, 255, 20) : new Color(0, 0, 0, 25));
         for (int i = 1; i < GameModel.LANE_COUNT; i++) {
             int x = i * laneWidth();
             g.drawLine(x, 0, x, getHeight());
         }
     }
 
-    /** Top Controls Navigation Buttons Drawing */
     private void drawTopButtons(Graphics g) {
         Graphics2D g2 = (Graphics2D) g;
         int size = 40;
-
         int px = getWidth() - 50;
         int py = 10;
 
         pauseBtn = new Rectangle(px, py, size, size);
 
-        g2.setColor(new Color(255, 255, 255, 200));
+        // Đổi màu nút tạm dừng dựa trên trạng thái hover và giao diện tối/sáng
+        g2.setColor(hoverPause ? new Color(200, 200, 200, 230) : (ThemeManager.IS_DARK_MODE ? new Color(60, 60, 70, 220) : new Color(255, 255, 255, 220)));
         g2.fillOval(px, py, size, size);
 
-        g2.setColor(Color.BLACK);
-        g2.fillRoundRect(px + 12, py + 10, 4, 20, 2, 2);
-        g2.fillRoundRect(px + 22, py + 10, 4, 20, 2, 2);
+        g2.setColor(ThemeManager.getTextColor());
+        g2.fillRoundRect(px + 13, py + 11, 4, 18, 2, 2);
+        g2.fillRoundRect(px + 23, py + 11, 4, 18, 2, 2);
     }
 
-    /** Player Character Rendering */
     private void drawPlayer(Graphics g) {
         Player p = model.getPlayer();
         p.draw(g, laneCenter(p.getLane()), laneWidth(), getHeight());
     }
 
-    /** Active Falling Objects Rendering */
     private void drawObjects(Graphics g) {
         for (FallingObject o : model.getObjects()) {
             o.draw(g, laneCenter(o.getLane()), laneWidth());
         }
     }
 
-    /** HUD Indicators Graphics Overlay */
     private void drawHUD(Graphics g) {
         Graphics2D g2 = (Graphics2D) g;
+        int w = getWidth();
 
-        g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-        g2.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        g2.setColor(ThemeManager.IS_DARK_MODE ? new Color(45, 45, 55, 230) : new Color(255, 255, 255, 230));
+        g2.fillRoundRect(10, 10, w - 20, 60, 18, 18);
+
+        g2.setColor(ThemeManager.getTextColor());
+        g2.setFont(new Font("Arial", Font.BOLD, 13));
 
         int time = model.getTimeSurvived();
         String mmss = String.format("%02d:%02d", time / 60, time % 60);
 
-        Record best = RecordManager.getBestRecord();
-        int bestScore = (best != null) ? best.getScore() : 0;
-
-        String[] labels = {
-                "Score: " + model.getScore(),
-                "Lives: " + model.getLives(),
-                "Time: " + mmss,
-                "Best: " + bestScore
-        };
-
-        int x = 15;
-        int y = 15;
-        int boxW = 110;
-        int boxH = 35;
-        int gap = 10;
-
-        for (int i = 0; i < labels.length; i++) {
-            int bx = x + i * (boxW + gap);
-            int by = y;
-
-            // Tạo hiệu ứng đổ bóng (Shadow Effect) tăng chiều sâu
-            g2.setColor(new Color(0, 0, 0, 60));
-            g2.fillRoundRect(bx + 3, by + 3, boxW, boxH, 12, 12);
-
-            // Nền hộp hiển thị thông số chính
-            g2.setColor(new Color(30, 30, 30, 180));
-            g2.fillRoundRect(bx, by, boxW, boxH, 12, 12);
-
-            // Vẽ viền cạnh thanh lịch
-            g2.setColor(new Color(255, 255, 255, 60));
-            g2.drawRoundRect(bx, by, boxW, boxH, 12, 12);
-
-            // Căn lề giữa và kết xuất chuỗi chữ hiển thị
-            g2.setColor(Color.WHITE);
-            FontMetrics fm = g2.getFontMetrics();
-            int tx = bx + (boxW - fm.stringWidth(labels[i])) / 2;
-            int ty = by + (boxH + fm.getAscent()) / 2 - 3;
-
-            g2.drawString(labels[i], tx, ty);
-        }
+        g2.drawString("Score: " + model.getScore(), 20, 35);
+        g2.drawString("Lives: " + model.getLives(), 150, 35);
+        g2.drawString("Time: " + mmss, 280, 35);
     }
 
-    /** Pause Overlay Popup Interface Menu */
+    /**
+     * Vẽ màn hình tạm dừng.
+     * Tích hợp nút SETTINGS thay cho cấu hình Sound/Music ON-OFF thủ công cũ.
+     */
     private void drawPauseScreen(Graphics g) {
         Graphics2D g2 = (Graphics2D) g;
 
-        g2.setColor(new Color(0, 0, 0, 160));
+        g2.setColor(new Color(0, 0, 0, 180));
         g2.fillRect(0, 0, getWidth(), getHeight());
 
-        int w = (int)(getWidth() * 0.75);
-        int h = (int)(getHeight() * 0.5);
-
+        int w = (int) (getWidth() * 0.80);
+        int h = (int) (getHeight() * 0.48);
         int x = (getWidth() - w) / 2;
         int y = (getHeight() - h) / 2;
 
-        g2.setColor(Color.WHITE);
+        g2.setColor(ThemeManager.IS_DARK_MODE ? new Color(35, 35, 45) : Color.WHITE);
         g2.fillRoundRect(x, y, w, h, 25, 25);
 
-        g2.setColor(Color.BLACK);
-        g2.setFont(new Font("Arial", Font.BOLD, 20));
-        g2.drawString("PAUSED", x + 20, y + 30);
+        g2.setColor(ThemeManager.getTextColor());
+        g2.setFont(new Font("Arial", Font.BOLD, 22));
+        g2.drawString("PAUSED", x + 25, y + 35);
 
-        int btnW = w - 40;
-        int btnH = 40;
-        int gap = 12;
+        int btnW = w - 50;
+        int btnH = 38;
+        int gap = 10;
+        int startBtnY = y + 55;
 
-        resumeBtn = new Rectangle(x + 20, y + 60, btnW, btnH);
-        restartBtn = new Rectangle(x + 20, y + 60 + (btnH + gap), btnW, btnH);
-        homePauseBtn = new Rectangle(x + 20, y + 60 + (btnH + gap) * 2, btnW, btnH);
-        soundBtn = new Rectangle(x + 20, y + 60 + (btnH + gap) * 3, btnW, btnH);
-        musicBtn = new Rectangle(x + 20, y + 60 + (btnH + gap) * 4, btnW, btnH);
+        resumeBtn       = new Rectangle(x + 25, startBtnY, btnW, btnH);
+        restartBtn      = new Rectangle(x + 25, startBtnY + (btnH + gap), btnW, btnH);
+        settingPauseBtn = new Rectangle(x + 25, startBtnY + (btnH + gap) * 2, btnW, btnH);
+        homePauseBtn    = new Rectangle(x + 25, startBtnY + (btnH + gap) * 3, btnW, btnH);
 
         drawButton(g2, resumeBtn, "RESUME");
-        drawButton(g2, restartBtn, "RESTART");
-        drawButton(g2, homePauseBtn, "HOME");
-        drawButton(g2, soundBtn, "SOUND: " + (SoundManager.SOUND_ON ? "ON" : "OFF"));
-        drawButton(g2, musicBtn, "MUSIC: " + (SoundManager.MUSIC_ON ? "ON" : "OFF"));
+        drawButton(g2, restartBtn, "RESTART GAME");
+        drawButton(g2, settingPauseBtn, "SETTINGS (VOLUME / THEME)");
+        drawButton(g2, homePauseBtn, "QUIT TO MAIN MENU");
     }
 
-    /** Game Over Screen Score Display Card */
     private void drawGameOver(Graphics g) {
         Graphics2D g2 = (Graphics2D) g;
-
         int w = getWidth();
         int h = getHeight();
 
-        g2.setColor(new Color(0, 0, 0, 170));
+        g2.setColor(new Color(0, 0, 0, 190));
         g2.fillRect(0, 0, w, h);
 
-        int bw = (int) (w * 0.75);
-        int bh = (int) (h * 0.78);
-
+        int bw = (int) (w * 0.80);
+        int bh = (int) (h * 0.72);
         int x = (w - bw) / 2;
         int y = (h - bh) / 2;
 
-        g2.setColor(Color.WHITE);
+        g2.setColor(ThemeManager.IS_DARK_MODE ? new Color(35, 35, 45) : Color.WHITE);
         g2.fillRoundRect(x, y, bw, bh, 25, 25);
 
-        /** Sponsor Advertisement Display Element */
+        g2.setColor(ThemeManager.getTextColor());
+        g2.setFont(new Font("Arial", Font.BOLD, 24));
+        g2.drawString("GAME OVER", x + 35, y + 45);
+
         if (gameOverAd != null) {
-            g2.drawImage(gameOverAd, x + 30, y + 25, bw - 60, 120, null);
+            g2.drawImage(gameOverAd, x + 25, y + 70, bw - 50, 120, null);
         }
 
-        /** Main Header Title Rendering */
-        g2.setColor(Color.BLACK);
-        g2.setFont(new Font("Arial", Font.BOLD, 24));
+        int btnY = y + 210;
+        recordBtn = new Rectangle(x + 35, btnY, bw - 70, 38);
+        replayBtn = new Rectangle(x + 35, btnY + 48, bw - 70, 38);
+        homeBtn   = new Rectangle(x + 35, btnY + 96, bw - 70, 38);
 
-        String title = "GAME OVER!";
-        FontMetrics fmTitle = g2.getFontMetrics();
-
-        int titleX = x + (bw - fmTitle.stringWidth(title)) / 2;
-        g2.drawString(title, titleX, y + 180);
-
-        /** Dynamic Highscore Identification Output */
-        int currentScore = model.getScore();
-        boolean isHighScore = currentScore >= RecordManager.getHighScore();
-
-        String scoreText = isHighScore
-                ? "NEW HIGH SCORE: " + currentScore
-                : "SCORE: " + currentScore;
-
-        g2.setFont(new Font("Arial", Font.BOLD, 20));
-        g2.setColor(isHighScore ? new Color(255, 140, 0) : Color.BLACK);
-
-        FontMetrics fmScore = g2.getFontMetrics();
-        int scoreX = x + (bw - fmScore.stringWidth(scoreText)) / 2;
-        g2.drawString(scoreText, scoreX, y + 230);
-
-        /** Navigation Functional Buttons Layout Bounds Setup */
-        recordBtn = new Rectangle(x + 40, y + 280, bw - 80, 40);
-        replayBtn = new Rectangle(x + 40, y + 330, bw - 80, 40);
-        homeBtn = new Rectangle(x + 40, y + 380, bw - 80, 40);
-
-        drawButton(g2, recordBtn, "RECORDS");
+        drawButton(g2, recordBtn, "LEADERBOARD RECORDS");
         drawButton(g2, replayBtn, "PLAY AGAIN");
-        drawButton(g2, homeBtn, "HOME");
+        drawButton(g2, homeBtn, "BACK TO MENU");
     }
 
-    /** Generic Standard UI Button Construction Helper Method */
     private void drawButton(Graphics2D g2, Rectangle r, String text) {
-        g2.setColor(new Color(220, 220, 220));
+        g2.setColor(ThemeManager.getButtonBg());
         g2.fillRoundRect(r.x, r.y, r.width, r.height, 12, 12);
 
-        g2.setColor(Color.BLACK);
+        g2.setColor(ThemeManager.getTextColor());
+        g2.setFont(new Font("Arial", Font.BOLD, 13));
         FontMetrics fm = g2.getFontMetrics();
 
         int tx = r.x + (r.width - fm.stringWidth(text)) / 2;
-        int ty = r.y + (r.height + fm.getAscent()) / 2 - 3;
+        int ty = r.y + (r.height + fm.getAscent()) / 2 - 2;
 
         g2.drawString(text, tx, ty);
     }

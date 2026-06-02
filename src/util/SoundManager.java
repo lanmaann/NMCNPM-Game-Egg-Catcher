@@ -2,98 +2,57 @@ package util;
 
 import javax.sound.sampled.*;
 import java.net.URL;
+
 /**
- * Lớp quản lý toàn bộ âm thanh của trò chơi.
- * 
- * Chức năng:
- * - Phát hiệu ứng âm thanh
- * - Phát nhạc nền
- * - Dừng nhạc nền
- * - Quản lý âm lượng
- * - Cung cấp các hàm phát âm thanh nhanh
+ * Sound Manager
+ * Lớp quản lý toàn bộ hệ thống âm thanh, nhạc nền và hiệu ứng của trò chơi.
+ * * Chức năng:
+ * - Quản lý âm lượng tuyến tính theo tỷ lệ phần trăm (0 - 100%).
+ * - Tự động biên dịch phần trăm thành định dạng Decibel (dB) logarit.
+ * - Phát/Dừng luồng nhạc nền (BGM) lặp vô hạn và các hiệu ứng âm thanh (SFX).
  */
 public class SoundManager {
 
-    /**
-     * Trạng thái bật/tắt hiệu ứng âm thanh.
-     */
-    public static boolean SOUND_ON = true;
+    /** Mức âm lượng hiệu ứng âm thanh toàn cục (Tuyến tính: 0% - 100%) */
+    public static int SOUND_VOLUME = 80;
 
-    /**
-     * Trạng thái bật/tắt nhạc nền.
-     */
-    public static boolean MUSIC_ON = true;
+    /** Mức âm lượng nhạc nền toàn cục (Tuyến tính: 0% - 100%) */
+    public static int MUSIC_VOLUME = 60;
 
-
-    /**
-     * Âm lượng nhạc nền.
-     */
-    public static float MUSIC_VOLUME = -20.0f;
-    /**
-     * Âm lượng âm thanh bắt trứng.
-     */
-    public static final float CATCH_VOLUME = -10.0f;
-    /**
-     * Âm lượng âm thanh trứng vàng.
-     */
-    public static final float GOLD_VOLUME = -3.0f;
-    /**
-     * Âm lượng âm thanh bom nổ.
-     */
-    public static final float EXPLOSION_VOLUME = 0.0f;
-    /**
-     * Âm lượng âm thanh trứng vỡ.
-     */
-    public static final float BREAK_VOLUME = -8.0f;
-    /**
-     * Âm lượng âm thanh gà xuất hiện.
-     */
-    public static final float CHICKEN_VOLUME = -5.0f;
-    /**
-     * Âm lượng âm thanh giao diện.
-     */
-    public static final float UI_VOLUME = -5.0f;
-    /**
-     * Âm lượng âm thanh Game Over.
-     */
-    public static final float GAME_OVER_VOLUME = -8.0f;
-    /**
-     * Âm lượng âm thanh di chuyển.
-     */
-    public static final float MOVE_VOLUME = -18.0f;
-    /**
-     * Clip nhạc nền đang phát.
-     */
+    /** Clip nhạc nền đang được thực thi phát trên hệ thống */
     private static Clip bgmClip;
 
+    /** Đường dẫn lưu trữ tài nguyên nhạc nền hiện tại */
+    private static String currentMusicPath;
+
     /**
-     * Phát hiệu ứng âm thanh.
-     * 
-     * @param path đường dẫn file âm thanh
-     * @param volume âm lượng
+     * Chuyển đổi giá trị tuyến tính phần trăm (0 - 100) sang giá trị Decibel (dB)
+     * Công thức logarit: dB = 20 * log10(volume / 100)
+     * Tránh lỗi âm vô hạn bằng cách giới hạn mốc tối thiểu -80.0f dB tại 0% thể tích.
+     *
+     * @param volumePercent tỷ lệ phần trăm âm lượng đầu vào (0 - 100)
+     * @return float trị số decibel tương ứng nạp vào MASTER_GAIN
      */
-    public static void playSFX(String path, float volume) {
-        if (!SOUND_ON) return;
-        play(path, volume);
+    private static float convertPercentToDecibel(int volumePercent) {
+        if (volumePercent <= 0) {
+            return -80.0f; 
+        }
+        float gain = (float) (20.0 * Math.log10(volumePercent / 100.0));
+        // Đảm bảo giá trị gain không vượt quá ngưỡng tối đa an toàn của phần cứng
+        return Math.max(-80.0f, Math.min(0.0f, gain));
     }
 
     /**
-     * Phát nhạc nền lặp vô hạn.
-     * 
-     * @param path đường dẫn file nhạc
+     * Phát hiệu ứng âm thanh (SFX) ngắn
+     *
+     * @param path              đường dẫn file âm thanh tài nguyên
+     * @param baseVolumePercent tỷ lệ phần trăm âm lượng đặc trưng của loại vật thể đó
      */
-    public static void playMusic(String path) {
-        if (!MUSIC_ON) return;
-        playBackgroundMusic(path);
-    }
-
-    // =========================================================
-    // CORE SOUND EFFECT
-    // =========================================================
-    private static void play(String path, float volume) {
+    public static void playSFX(String path, int baseVolumePercent) {
+        // Nếu âm lượng tổng bằng 0, hủy tiến trình phát âm thanh
+        if (SOUND_VOLUME <= 0) return;
 
         try {
-
             URL url = SoundManager.class.getResource(path);
             if (url == null) {
                 System.out.println("❌ Sound not found: " + path);
@@ -104,10 +63,12 @@ public class SoundManager {
             Clip clip = AudioSystem.getClip();
             clip.open(audio);
 
-            // volume
+            // Tính toán âm lượng thực tế kết hợp giữa âm lượng SFX tổng và đặc trưng vật thể
+            int finalVolume = (int) (baseVolumePercent * (SOUND_VOLUME / 100.0));
+
             if (clip.isControlSupported(FloatControl.Type.MASTER_GAIN)) {
                 FloatControl gain = (FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN);
-                gain.setValue(volume);
+                gain.setValue(convertPercentToDecibel(finalVolume));
             }
 
             clip.addLineListener(event -> {
@@ -125,18 +86,37 @@ public class SoundManager {
     }
 
     /**
-     * Phát nhạc nền lặp vô hạn.
-     * 
-     * @param path đường dẫn file nhạc
+     * Cập nhật âm lượng cho nhạc nền đang phát ngay trong thời gian thực (Runtime update)
+     */
+    public static void updateMusicVolume() {
+        if (bgmClip != null && bgmClip.isActive()) {
+            if (MUSIC_VOLUME <= 0) {
+                bgmClip.stop();
+            } else {
+                if (!bgmClip.isRunning()) {
+                    bgmClip.start();
+                }
+                if (bgmClip.isControlSupported(FloatControl.Type.MASTER_GAIN)) {
+                    FloatControl gain = (FloatControl) bgmClip.getControl(FloatControl.Type.MASTER_GAIN);
+                    gain.setValue(convertPercentToDecibel(MUSIC_VOLUME));
+                }
+            }
+        } else if (MUSIC_VOLUME > 0 && currentMusicPath != null) {
+            // Nếu nhạc nền đang tắt nhưng người chơi kéo tăng âm lượng lên, tái khởi động bài nhạc
+            playBackgroundMusic(currentMusicPath);
+        }
+    }
+
+    /**
+     * Khởi chạy nhạc nền lặp vô hạn
+     *
+     * @param path đường dẫn file âm thanh tài nguyên
      */
     public static void playBackgroundMusic(String path) {
-        // Không phát nếu tắt nhạc
-        if (!MUSIC_ON) return;
+        currentMusicPath = path;
+        if (MUSIC_VOLUME <= 0) return;
 
         try {
-        	/**
-             * Dừng nhạc cũ để tránh chồng nhạc.
-             */
             stopMusic();
 
             URL url = SoundManager.class.getResource(path);
@@ -148,18 +128,11 @@ public class SoundManager {
             AudioInputStream audio = AudioSystem.getAudioInputStream(url);
             bgmClip = AudioSystem.getClip();
             bgmClip.open(audio);
-            /**
-             * Điều chỉnh âm lượng nhạc nền.
-             */
 
             if (bgmClip.isControlSupported(FloatControl.Type.MASTER_GAIN)) {
                 FloatControl gain = (FloatControl) bgmClip.getControl(FloatControl.Type.MASTER_GAIN);
-                gain.setValue(MUSIC_VOLUME);
+                gain.setValue(convertPercentToDecibel(MUSIC_VOLUME));
             }
-
-            /**
-             * Phát lặp vô hạn.
-             */
 
             bgmClip.loop(Clip.LOOP_CONTINUOUSLY);
             bgmClip.start();
@@ -171,7 +144,7 @@ public class SoundManager {
     }
 
     /**
-     * Dừng nhạc nền hiện tại.
+     * Dừng ngay lập tức nhạc nền đang phát và giải phóng tài nguyên
      */
     public static void stopMusic() {
         if (bgmClip != null) {
@@ -182,24 +155,18 @@ public class SoundManager {
     }
 
     /**
-     * Phát nhạc Game Over.
-     * 
-     * @param path đường dẫn file nhạc
+     * Phát luồng âm nhạc kết thúc trò chơi (Game Over)
+     *
+     * @param path đường dẫn file âm thanh tài nguyên
      */
     public static void playGameOverMusic(String path) {
-    	   // Không phát nếu tắt nhạc
-        if (!MUSIC_ON) return;
+        if (MUSIC_VOLUME <= 0) return;
 
         try {
-         
-        	 /**
-             * Dừng nhạc nền trước khi phát.
-             */
             stopMusic();
 
             URL url = SoundManager.class.getResource(path);
             if (url == null) {
-                // Không tìm thấy file
                 System.out.println("❌ Game over music not found");
                 return;
             }
@@ -207,22 +174,19 @@ public class SoundManager {
             AudioInputStream audio = AudioSystem.getAudioInputStream(url);
             Clip clip = AudioSystem.getClip();
             clip.open(audio);
-            /**
-             * Điều chỉnh âm lượng.
-             */
+
             if (clip.isControlSupported(FloatControl.Type.MASTER_GAIN)) {
                 FloatControl gain = (FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN);
-                gain.setValue(GAME_OVER_VOLUME);
+                // Game Over sfx phát theo thang tỉ lệ cấu hình nhạc nền hiện tại
+                gain.setValue(convertPercentToDecibel(MUSIC_VOLUME));
             }
-            /**
-             * Tự động đóng clip sau khi phát xong.
-             */
+
             clip.addLineListener(event -> {
                 if (event.getType() == LineEvent.Type.STOP) {
                     clip.close();
                 }
             });
-            // Phát âm thanh
+
             clip.start();
 
         } catch (Exception e) {
@@ -230,54 +194,43 @@ public class SoundManager {
         }
     }
 
-    /**
-     * Phát âm thanh bắt trứng.
-     */
-
+    /** Phát âm thanh khi giỏ hứng trúng trứng thường (Cường độ gốc: 70%) */
     public static void playCatch() {
-        playSFX("/resources/sound/catch.wav", CATCH_VOLUME);
+        playSFX("/resources/sound/catch.wav", 70);
     }
-    /**
-     * Phát âm thanh trứng vàng.
-     */
 
+    /** Phát âm thanh khi giỏ hứng trúng trứng vàng siêu cấp (Cường độ gốc: 90%) */
     public static void playGold() {
-        playSFX("/resources/sound/gold.wav", GOLD_VOLUME);
+        playSFX("/resources/sound/gold.wav", 90);
     }
-    /**
-     * Phát âm thanh bom nổ.
-     */
+
+    /** Phát âm thanh khi va phải bom nổ (Cường độ gốc: 100%) */
     public static void playExplosion() {
-        playSFX("/resources/sound/explosion.wav", EXPLOSION_VOLUME);
+        playSFX("/resources/sound/explosion.wav", 100);
     }
-    /**
-     * Phát âm thanh trứng vỡ.
-     */
+
+    /** Phát âm thanh khi để trứng thường rơi lọt xuống đất vỡ (Cường độ gốc: 80%) */
     public static void playBreak() {
-        playSFX("/resources/sound/break.wav", BREAK_VOLUME);
+        playSFX("/resources/sound/break.wav", 80);
     }
-    /**
-     * Phát âm thanh gà xuất hiện.
-     */
+
+    /** Phát âm thanh khi gà đẻ trứng xuất hiện trên thanh điều hướng (Cường độ gốc: 85%) */
     public static void playChicken() {
-        playSFX("/resources/sound/chicken.wav", CHICKEN_VOLUME);
+        playSFX("/resources/sound/chicken.wav", 85);
     }
-    /**
-     * Phát âm thanh giao diện.
-     */
+
+    /** Phát âm thanh phản hồi khi click nút bấm giao diện (Cường độ gốc: 85%) */
     public static void playUI() {
-        playSFX("/resources/sound/click.wav", UI_VOLUME);
+        playSFX("/resources/sound/click.wav", 85);
     }
-    /**
-     * Phát âm thanh di chuyển.
-     */
+
+    /** Phát âm thanh khi người chơi dịch chuyển giỏ hứng sang trái/phải (Cường độ gốc: 50%) */
     public static void playMove() {
-        playSFX("/resources/sound/move.wav", MOVE_VOLUME);
+        playSFX("/resources/sound/move.wav", 50);
     }
-    /**
-     * Phát âm thanh restart game.
-     */
+
+    /** Phát âm thanh khi nhấn chọn làm mới/chơi lại trận đấu (Cường độ gốc: 85%) */
     public static void playRestart() {
-        playSFX("/resources/sound/click.wav", UI_VOLUME);
+        playSFX("/resources/sound/click.wav", 85);
     }
 }

@@ -170,7 +170,8 @@ public class GameModel {
             else if (type < 75) obj = new BadEgg(lane);
             else if (type < 90) obj = new Bomb(lane);
             else if (type < 97) obj = new GoldenEgg(lane);
-            else obj = new Chicken(lane);   
+            else if (type < 99) obj = new Chicken(lane);   
+            else obj = new HeartItem(lane);               
 
             obj.setSpeed(Math.min(10, 3 + level / 2));
 
@@ -263,7 +264,14 @@ public class GameModel {
                 util.SoundManager.playGold();
             }
         }
-        
+        else if (obj instanceof HeartItem) {
+            if (caught) {
+        if (lives < 3) { // Giới hạn tối đa 3 mạng
+            lives++;
+        }
+        // Bạn có thể thêm âm thanh hồi phục tại đây nếu có
+    }
+}
         else if (obj instanceof Chicken) {
             if (caught) lives--;
             util.SoundManager.playChicken();

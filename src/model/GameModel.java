@@ -75,16 +75,17 @@ public class GameModel {
     // =========================================================
     public void reset() {
 
-        score = 0;
-        lives = 3;
+        /* UC 1.1 - Bước 1.1.2: Hệ thống khởi tạo lại các giá trị ban đầu cho màn chơi mới */
+        score = 0;                 // - Điểm số (Score) = 0
+        lives = 3;                 // - Số mạng (Lives) = 3
 
-        gameOver = false;
-        paused = false;
+        gameOver = false;          // - Trò chơi quay về trạng thái chưa kết thúc
+        paused = false;            // - Hậu điều kiện: Trò chơi chuyển sang trạng thái "Đang chơi" (Playing)
 
         tick = 0;
         level = 1;
 
-        startTime = System.currentTimeMillis();
+        startTime = System.currentTimeMillis(); // - Thời gian chơi được (Time) được tính lại từ đầu
         frozenTime = 0;
 
         objects.clear();
@@ -122,6 +123,7 @@ public class GameModel {
         tick++;
         level = tick / 800 + 1;
 
+        /* UC 1.1 - Bước 1.1.4: Hệ thống bắt đầu kích hoạt tạo trứng rơi tuần tự liên tục */
         spawn();
 
         Iterator<FallingObject> it = objects.iterator();
@@ -164,7 +166,7 @@ public class GameModel {
             int lane = rand.nextInt(LANE_COUNT);
             int type = rand.nextInt(100);
 
-            FallingObject obj;
+            private FallingObject obj;
 
             if (type < 50) obj = new Egg(lane);
             else if (type < 75) obj = new BadEgg(lane);
@@ -228,7 +230,7 @@ public class GameModel {
     // =========================================================
     private void applyRule(FallingObject obj, boolean caught) {
 
-        	if (obj instanceof Egg) {
+            if (obj instanceof Egg) {
 
                 if (caught) {
 
@@ -277,6 +279,7 @@ public class GameModel {
             util.SoundManager.playChicken();
         }
 
+        /* UC 1.1 - Bước 1.1.2: Hệ thống lấy điểm số kỷ lục (Best score) từ RecordManager khi kết thúc game */
         // 🔥 không cho điểm âm
         if (score < 0) score = 0;
 

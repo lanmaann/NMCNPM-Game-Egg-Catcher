@@ -34,6 +34,7 @@ public class GameController {
         running = true;
         SoundManager.playBackgroundMusic("/resources/music/bgm.wav");
 
+        /* UC 1.1 - Bước 1.1.4: Hệ thống kích hoạt bộ đếm thời gian (Game Loop chạy bằng Thread với tần suất 60 FPS) */
         gameThread = new Thread(() -> {
 
             final int FPS = 60;
@@ -44,9 +45,11 @@ public class GameController {
                 long start = System.currentTimeMillis();
 
                 if (!model.isPaused() && !model.isGameOver()) {
+                    /* Cập nhật logic các đối tượng chuyển động và rơi tự do */
                     model.update();
                 }
 
+                /* Vẽ lại toàn bộ giao diện trò chơi ở trạng thái PLAYING */
                 view.repaint();
 
                 long sleep = frameTime - (System.currentTimeMillis() - start);
@@ -98,40 +101,17 @@ public class GameController {
 
                     case KeyEvent.VK_LEFT:
                         model.getPlayer().moveLeft();
-                        SoundManager.playMove();;
+                        SoundManager.playMove();
                         break;
 
                     case KeyEvent.VK_RIGHT:
                         model.getPlayer().moveRight();
                         SoundManager.playMove();
                         break;
-
-                    case KeyEvent.VK_P:
-                        model.togglePause();
-                        SoundManager.playMove();
-                        break;
-
-                    case KeyEvent.VK_R:
-                        restart();
-                        break;
                 }
             }
         };
 
         view.addKeyListener(keyHandler);
-        view.requestFocusInWindow();
-    }
-
-    // =========================
-    // RESTART (SAFE)
-    // =========================
-    public void restart() {
-
-        stop();
-
-        model.reset();
-
-        initInput();
-        start();
     }
 }

@@ -59,7 +59,7 @@ public class MainMenuPanel extends JPanel {
                 new JLabel(
                         "EGG CATCHER",
                         SwingConstants.CENTER
-                );
+                    );
 
         title.setAlignmentX(
                 Component.CENTER_ALIGNMENT
@@ -85,6 +85,7 @@ public class MainMenuPanel extends JPanel {
         // =====================================================
         // BUTTONS
         // =====================================================
+        /* UC 1.1 - Bước 1.1.1: Người chơi chọn nút bắt đầu game (START) từ Menu chính */
         JButton startBtn =
                 createButton(
                         "START",

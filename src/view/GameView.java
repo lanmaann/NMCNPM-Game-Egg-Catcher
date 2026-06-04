@@ -53,6 +53,7 @@ public class GameView extends JPanel {
         setBackground(new Color(245, 248, 255));
         setFocusable(true);
 
+        /* UC 1.1 - Bước 1.1.3: Hệ thống nạp (Load) tài nguyên hình ảnh (Ads, Giỏ, Trứng...) lên màn hình thông qua ImageLoader */
         gameOverAd = ImageLoader.load("/resources/ads/ad1.png");
 
         initMouse();
@@ -99,6 +100,7 @@ public class GameView extends JPanel {
                     }
 
                     if (restartBtn.contains(p)) {
+                        /* UC 1.1 - Bước 1.1.1: Người chơi chọn nút bắt đầu game (RESTART) từ màn hình tạm dừng */
                         model.reset();
 
                         if (SoundManager.MUSIC_ON) {
@@ -151,6 +153,7 @@ public class GameView extends JPanel {
                       
                     }
                     if (replayBtn.contains(p)) {
+                        /* UC 1.1 - Bước 1.1.1: Người chơi chọn nút bắt đầu game (PLAY AGAIN) từ màn hình Game Over */
                         model.reset();
 
                         if (SoundManager.MUSIC_ON) {

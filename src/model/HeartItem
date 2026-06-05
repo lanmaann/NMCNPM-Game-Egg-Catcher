@@ -59,4 +59,36 @@ public class HeartItem extends FallingObject {
         // Vẽ một hình tròn đỏ làm biểu tượng trái tim
         g.fillOval(centerX - 10, getY(), 20, 20); 
     }
+ // =========================================================
+    // PHƯƠNG THỨC HỖ TRỢ KIỂM THỬ (DEBUG & TEST)
+    // =========================================================
+    
+    /**
+     * Phương thức main này giúp test nhanh ngay tại file này.
+     */
+    public static void main(String[] args) {
+        System.out.println("--- Bắt đầu kiểm thử HeartItem ---");
+
+        // 1. Test khởi tạo
+        HeartItem testHeart = new HeartItem(2);
+        boolean laneOk = (testHeart.getLane() == 2);
+        System.out.println("Test 1 - Khởi tạo đúng làn: " + (laneOk ? "PASSED" : "FAILED"));
+
+        // 2. Test hành vi bắt được
+        testHeart.catchObject();
+        boolean catchOk = testHeart.isDead();
+        System.out.println("Test 2 - Trạng thái sau khi bắt (DEAD): " + (catchOk ? "PASSED" : "FAILED"));
+
+        // 3. Test hành vi bỏ lỡ
+        HeartItem testHeart2 = new HeartItem(0);
+        testHeart2.missObject();
+        boolean missOk = testHeart2.isDead();
+        System.out.println("Test 3 - Trạng thái sau khi bỏ lỡ (DEAD): " + (missOk ? "PASSED" : "FAILED"));
+
+        if (laneOk && catchOk && missOk) {
+            System.out.println(">>> TẤT CẢ CÁC BÀI TEST ĐÃ VƯỢT QUA <<<");
+        } else {
+            System.out.println(">>> CÓ LỖI XẢY RA TRONG QUÁ TRÌNH TEST <<<");
+        }
+    }
 }

@@ -1,4 +1,4 @@
-package model;
+    package model;
 
 import java.util.*;
 
@@ -166,7 +166,7 @@ public class GameModel {
             int lane = rand.nextInt(LANE_COUNT);
             int type = rand.nextInt(100);
 
-            private FallingObject obj;
+            FallingObject obj;
 
             if (type < 50) obj = new Egg(lane);
             else if (type < 75) obj = new BadEgg(lane);
@@ -268,17 +268,15 @@ public class GameModel {
         }
         else if (obj instanceof HeartItem) {
             if (caught) {
-        if (lives < 3) { // Giới hạn tối đa 3 mạng
-            lives++;
+                if (lives < 3) { 
+                lives++;
+            }
         }
-        // Bạn có thể thêm âm thanh hồi phục tại đây nếu có
-    }
-}
+    } 
         else if (obj instanceof Chicken) {
             if (caught) lives--;
             util.SoundManager.playChicken();
-        }
-
+    }
         /* UC 1.1 - Bước 1.1.2: Hệ thống lấy điểm số kỷ lục (Best score) từ RecordManager khi kết thúc game */
         // 🔥 không cho điểm âm
         if (score < 0) score = 0;

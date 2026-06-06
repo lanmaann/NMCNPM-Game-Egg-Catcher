@@ -9,43 +9,43 @@ import java.awt.*;
 import java.awt.event.*;
 import util.ImageLoader;
 import util.SoundManager;
+import util.ThemeManager;
 
 public class GameView extends JPanel {
 
-    private GameModel model;
+	private GameModel model;
 
-    private Runnable onHome;
-    private Runnable onRecords;
+	private Runnable onHome;
+	private Runnable onRecords;
 
-    // =========================
-    // BUTTONS
-    // =========================
-    private Rectangle pauseBtn = new Rectangle();
+	// =========================
+	// BUTTONS
+	// =========================
+	private Rectangle pauseBtn = new Rectangle();
+	private Rectangle recordBtn = new Rectangle();
+	private Rectangle homeBtn = new Rectangle();
+	private Rectangle replayBtn = new Rectangle();
 
-    private Rectangle recordBtn = new Rectangle();
-    private Rectangle homeBtn = new Rectangle();
-    private Rectangle replayBtn = new Rectangle();
-   
-    // =========================
-    // PAUSE SCREEN BUTTONS
-    // =========================
-    private Rectangle resumeBtn = new Rectangle();
-    private Rectangle restartBtn = new Rectangle();
-    private Rectangle homePauseBtn = new Rectangle();
-    private Rectangle soundBtn = new Rectangle();
-    private Rectangle musicBtn = new Rectangle();
+	// =========================
+	// PAUSE SCREEN BUTTONS
+	// =========================
+	private Rectangle resumeBtn = new Rectangle();
+	private Rectangle restartBtn = new Rectangle();
+	private Rectangle homePauseBtn = new Rectangle();
+	private Rectangle soundBtn = new Rectangle();
+	private Rectangle settingPauseBtn = new Rectangle();
 
-    // =========================
-    // STATE
-    // =========================
-    private boolean hoverPause = false;
+	// =========================
+	// STATE
+	// =========================
+	private boolean hoverPause = false;
 
-    // =========================
-    // ADS
-    // =========================
-    private Image gameOverAd;
+	// =========================
+	// ADS
+	// =========================
+	private Image gameOverAd;
 
-    public GameView(GameModel model, Runnable onHome, Runnable onRecords) {
+	public GameView(GameModel model, Runnable onHome, Runnable onRecords) {
         this.model = model;
         this.onHome = onHome;
         this.onRecords = onRecords;
@@ -59,10 +59,10 @@ public class GameView extends JPanel {
         initMouse();
     }
 
-    // =========================================================
-    // INPUT
-    // =========================================================
-    private void initMouse() {
+	// =========================================================
+	// INPUT
+	// =========================================================
+	private void initMouse() {
 
         addMouseListener(new MouseAdapter() {
             @Override
@@ -74,38 +74,34 @@ public class GameView extends JPanel {
                 if (pauseBtn.contains(p)) {
                     model.togglePause();
 
-                    if (SoundManager.SOUND_ON) {
-                        SoundManager.playUI();
-                    }
+                    SoundManager.playUI();
+
 
                     if (model.isPaused()) {
                         SoundManager.stopMusic();
                     } else {
-                        SoundManager.playMusic("/resources/music/bgm.wav");
+                    		SoundManager.playGameOverMusic("/resources/music/bgm.wav");
                     }
-
+                    repaint();
                     return;
                 }
 
                 // ================= PAUSE SCREEN =================
                 if (model.isPaused()) {
-
-                    if (resumeBtn.contains(p)) {
-                        model.togglePause();
-
-                        if (SoundManager.MUSIC_ON) {
-                            SoundManager.playMusic("/resources/music/bgm.wav");
-                        }
-                        return;
-                    }
-
+	                	if (resumeBtn.contains(p)) {
+	                	    model.togglePause();
+	                	    SoundManager.playBackgroundMusic("/resources/music/bgm.wav");
+	                	    repaint();
+	                	    return;
+	                	}
+	                	
                     if (restartBtn.contains(p)) {
                         /* UC 1.1 - Bước 1.1.1: Người chơi chọn nút bắt đầu game (RESTART) từ màn hình tạm dừng */
                         model.reset();
 
-                        if (SoundManager.MUSIC_ON) {
-                            SoundManager.playMusic("/resources/music/bgm.wav");
-                        }
+                        SoundManager.stopMusic();
+                        SoundManager.playBackgroundMusic("/resources/music/bgm.wav");
+                        repaint();
                         return;
                     }
 
@@ -113,38 +109,15 @@ public class GameView extends JPanel {
                         if (onHome != null) onHome.run();
                         return;
                     }
-
-                    // =========================
-                    // SOUND TOGGLE
-                    // =========================
-                    if (soundBtn.contains(p)) {
-                        SoundManager.SOUND_ON = !SoundManager.SOUND_ON;
-
-                        if (!SoundManager.SOUND_ON) {
-                            // không cần stop music ở đây (chỉ SFX)
-                        }
-
+                    
+                    // [3.1.1] Người chơi click chọn nút settings lồng trên màn hình pause
+                    if (settingPauseBtn.contains(p)) {
+                        showEmbeddedSettingsDialog();
                         return;
                     }
-
-                    // =========================
-                    // MUSIC TOGGLE
-                    // =========================
-                    if (musicBtn.contains(p)) {
-                        SoundManager.MUSIC_ON = !SoundManager.MUSIC_ON;
-
-                        if (!SoundManager.MUSIC_ON) {
-                            SoundManager.stopMusic();
-                        } else {
-                            SoundManager.playMusic("/resources/music/bgm.wav");
-                        }
-
-                        return;
-                    }
-
-                    model.togglePause();
                     return;
                 }
+
                 // ================= GAME OVER =================
                 if (model.isGameOver()) {
 
@@ -156,12 +129,12 @@ public class GameView extends JPanel {
                         /* UC 1.1 - Bước 1.1.1: Người chơi chọn nút bắt đầu game (PLAY AGAIN) từ màn hình Game Over */
                         model.reset();
 
-                        if (SoundManager.MUSIC_ON) {
-                            SoundManager.playMusic("/resources/music/bgm.wav");
-                        }
-
+                        SoundManager.stopMusic();
+                        SoundManager.playBackgroundMusic("/resources/music/bgm.wav");
+                        repaint();
                         return;
                     }
+                    
                     if (homeBtn.contains(p) && onHome != null) {
                         onHome.run();
                        
@@ -242,24 +215,20 @@ public class GameView extends JPanel {
     // TOP BUTTONS
     // =========================================================
     private void drawTopButtons(Graphics g) {
-
         Graphics2D g2 = (Graphics2D) g;
-
         int size = 40;
-
-        // PAUSE
         int px = getWidth() - 50;
         int py = 10;
 
         pauseBtn = new Rectangle(px, py, size, size);
 
-        g2.setColor(new Color(255, 255, 255, 200));
+        // Đổi màu nút tạm dừng dựa trên trạng thái hover và giao diện tối/sáng
+        g2.setColor(hoverPause ? new Color(200, 200, 200, 230) : (ThemeManager.IS_DARK_MODE ? new Color(60, 60, 70, 220) : new Color(255, 255, 255, 220)));
         g2.fillOval(px, py, size, size);
 
-        g2.setColor(Color.BLACK);
-        g2.fillRoundRect(px + 12, py + 10, 4, 20, 2, 2);
-        g2.fillRoundRect(px + 22, py + 10, 4, 20, 2, 2);
-
+        g2.setColor(ThemeManager.getTextColor());
+        g2.fillRoundRect(px + 13, py + 11, 4, 18, 2, 2);
+        g2.fillRoundRect(px + 23, py + 11, 4, 18, 2, 2);
     }
 
     // =========================================================
@@ -306,46 +275,39 @@ public class GameView extends JPanel {
     // PAUSE SCREEN (FULL BUTTONS)
     // =========================================================
     private void drawPauseScreen(Graphics g) {
-
         Graphics2D g2 = (Graphics2D) g;
 
-        g2.setColor(new Color(0, 0, 0, 160));
+        g2.setColor(new Color(0, 0, 0, 180));
         g2.fillRect(0, 0, getWidth(), getHeight());
 
-        int w = (int)(getWidth() * 0.75);
-        int h = (int)(getHeight() * 0.5);
-
+        int w = (int) (getWidth() * 0.80);
+        int h = (int) (getHeight() * 0.48);
         int x = (getWidth() - w) / 2;
         int y = (getHeight() - h) / 2;
 
-        g2.setColor(Color.WHITE);
+        g2.setColor(ThemeManager.IS_DARK_MODE ? new Color(35, 35, 45) : Color.WHITE);
         g2.fillRoundRect(x, y, w, h, 25, 25);
 
-        g2.setColor(Color.BLACK);
-        g2.setFont(new Font("Arial", Font.BOLD, 20));
-        g2.drawString("PAUSED", x + 20, y + 30);
+        g2.setColor(ThemeManager.getTextColor());
+        g2.setFont(new Font("Arial", Font.BOLD, 22));
+        g2.drawString("PAUSED", x + 25, y + 35);
 
-        int btnW = w - 40;
-        int btnH = 40;
-        int gap = 12;
+        int btnW = w - 50;
+        int btnH = 38;
+        int gap = 10;
+        int startBtnY = y + 55;
 
-        resumeBtn = new Rectangle(x + 20, y + 60, btnW, btnH);
-        restartBtn = new Rectangle(x + 20, y + 60 + (btnH + gap), btnW, btnH);
-        homePauseBtn = new Rectangle(x + 20, y + 60 + (btnH + gap) * 2, btnW, btnH);
-        soundBtn = new Rectangle(x + 20, y + 60 + (btnH + gap) * 3, btnW, btnH);
-        musicBtn = new Rectangle(x + 20, y + 60 + (btnH + gap) * 4, btnW, btnH);
-
+        resumeBtn       = new Rectangle(x + 25, startBtnY, btnW, btnH);
+        restartBtn      = new Rectangle(x + 25, startBtnY + (btnH + gap), btnW, btnH);
+        settingPauseBtn = new Rectangle(x + 25, startBtnY + (btnH + gap) * 2, btnW, btnH);
+        homePauseBtn    = new Rectangle(x + 25, startBtnY + (btnH + gap) * 3, btnW, btnH);
 
         drawButton(g2, resumeBtn, "RESUME");
-        drawButton(g2, restartBtn, "RESTART");
-        drawButton(g2, homePauseBtn, "HOME");
-        drawButton(g2, soundBtn,
-                "SOUND: " + (SoundManager.SOUND_ON ? "ON" : "OFF"));
-
-        drawButton(g2, musicBtn,
-                "MUSIC: " + (SoundManager.MUSIC_ON ? "ON" : "OFF"));
+        drawButton(g2, restartBtn, "RESTART GAME");
+        drawButton(g2, settingPauseBtn, "SETTINGS (VOLUME / THEME)");
+        drawButton(g2, homePauseBtn, "QUIT TO MAIN MENU");
     }
-
+    
     // =========================================================
     // GAME OVER
     // =========================================================
@@ -402,4 +364,68 @@ public class GameView extends JPanel {
 
         g2.drawString(text, tx, ty);
     }
+    
+    /**
+     * Triển khai xuất hộp thoại cấu hình nâng cao tích hợp Volume Sliders và Dark Mode Switch.
+     */
+    private void showEmbeddedSettingsDialog() {
+        // Tạo thanh trượt Volume cho Nhạc nền
+        JSlider musicSlider = new JSlider(JSlider.HORIZONTAL, 0, 100, SoundManager.MUSIC_VOLUME);
+        musicSlider.setMajorTickSpacing(25);
+        musicSlider.setPaintTicks(true);
+        musicSlider.setPaintLabels(true);
+
+        // Tạo thanh trượt Volume cho Hiệu ứng âm thanh (SFX)
+        JSlider sfxSlider = new JSlider(JSlider.HORIZONTAL, 0, 100, SoundManager.SOUND_VOLUME);
+        sfxSlider.setMajorTickSpacing(25);
+        sfxSlider.setPaintTicks(true);
+        sfxSlider.setPaintLabels(true);
+
+        // Tạo Checkbox tùy chọn giao diện tối
+        JCheckBox darkModeCheck = new JCheckBox("Enable Dark Mode", ThemeManager.IS_DARK_MODE);
+
+        JTextArea guide = new JTextArea("HOW TO PLAY\n\n← → : Move Basket\nCatch eggs, avoid bombs.\nP : Pause Game | R : Restart Match");
+        guide.setEditable(false);
+        guide.setFont(new Font("Arial", Font.PLAIN, 12));
+        guide.setBackground(new Color(235, 235, 235));
+
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        
+        panel.add(new JLabel("Background Music Volume:"));
+        panel.add(musicSlider);
+        panel.add(Box.createVerticalStrut(10));
+        panel.add(new JLabel("Sound Effects Volume:"));
+        panel.add(sfxSlider);
+        panel.add(Box.createVerticalStrut(10));
+        panel.add(darkModeCheck);
+        panel.add(Box.createVerticalStrut(15));
+        panel.add(new JLabel("Game Control Guide:"));
+        panel.add(new JScrollPane(guide));
+
+        // [3.1.2] Treo luồng dựng form lồng lên trên màn hình đồ họa gameview hiện thời
+        int result = JOptionPane.showConfirmDialog(
+                this, panel, "In-Game Settings",
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE
+        );
+        
+        // [3.1.3] Nhận tín hiệu tương tác hành động click từ người chơi
+        // [3.1.4 alt] Nhánh chấp thuận lưu cấu hình (Người chơi bấm OK)
+        if (result == JOptionPane.OK_OPTION) {
+            // Lưu dữ liệu phần trăm mới vào core sound
+            SoundManager.MUSIC_VOLUME = musicSlider.getValue();
+            SoundManager.SOUND_VOLUME = sfxSlider.getValue();
+            
+            // Ép hệ thống âm thanh cập nhật cường độ decibel lập tức
+            SoundManager.updateMusicVolume();
+
+            // Cập nhật cấu hình Dark Mode
+            ThemeManager.IS_DARK_MODE = darkModeCheck.isSelected();
+            
+         // [3.1.4 alt] Vẽ lại toàn bộ màn hình để áp màu sắc giao diện mới            
+            repaint();
+        }
+     // [3.2.1 else] Nhánh hủy bỏ (Bấm Cancel hoặc dấu X) tự động đóng dialog, giữ nguyên biến tĩnh
+    }
+
 }

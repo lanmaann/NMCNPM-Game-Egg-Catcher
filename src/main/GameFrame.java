@@ -53,6 +53,9 @@ public class GameFrame extends JFrame {
         setContentPane(container);
 
         initScreens();
+        SoundManager.playBackgroundMusic(
+                "/resources/music/bgm.wav"
+        );
 
         setLocationRelativeTo(null);
         setVisible(true);
@@ -84,6 +87,7 @@ public class GameFrame extends JFrame {
 
         stopController();
 
+        
         model = new GameModel();
 
         gameView = new GameView(

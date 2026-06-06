@@ -216,7 +216,9 @@ public class GameView extends JPanel {
     }
 
     private void drawLane(Graphics g) {
-        g.setColor(new Color(0, 0, 0, 25));
+        g.setColor(ThemeManager.IS_DARK_MODE
+	    	        ? new Color(255, 255, 255, 35)
+	    	        : new Color(0, 0, 0, 60));
 
         for (int i = 1; i < GameModel.LANE_COUNT; i++) {
             int x = i * laneWidth();

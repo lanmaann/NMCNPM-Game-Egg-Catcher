@@ -1,6 +1,8 @@
 package util;
 
 import java.awt.Color;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Theme Manager
@@ -11,6 +13,23 @@ public class ThemeManager {
     /** Trạng thái Chế độ tối (true: Dark Mode, false: Light Mode) */
     public static boolean IS_DARK_MODE = false;
 
+    private static List<Runnable> listeners = new ArrayList<>();
+
+    public static void addListener(Runnable r) {
+        listeners.add(r);
+    }
+
+    private static void notifyChange() {
+        for (Runnable r : listeners) {
+            r.run();
+        }
+    }
+
+    public static void setDarkMode(boolean dark) {
+        IS_DARK_MODE = dark;
+        notifyChange();
+    }
+    
     // Màu nền chính (Background)
     public static Color getBgStart() {
         return IS_DARK_MODE ? new Color(30, 30, 40) : new Color(245, 248, 255);

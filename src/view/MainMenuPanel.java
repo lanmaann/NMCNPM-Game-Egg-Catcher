@@ -26,6 +26,12 @@ public class MainMenuPanel extends JPanel {
 	public MainMenuPanel(Runnable onStart, Runnable onLeaderboard, Runnable onExit) {
 		this.onExitCallback = onExit;
 
+		ThemeManager.addListener(() -> {
+		    applyThemeStyles();
+		    updateComponentColors();
+		    repaint();
+		});
+		
 		setLayout(new GridBagLayout());
 		applyThemeStyles();
 
@@ -44,7 +50,9 @@ public class MainMenuPanel extends JPanel {
 		title.setFont(new Font("Arial", Font.BOLD, 28));
 		title.setBorder(BorderFactory.createEmptyBorder(20, 10, 30, 10));
 
-		/* UC 1.1 - Bước 1.1.1: Người chơi chọn nút bắt đầu game (START) từ Menu chính */
+		/*
+		 * UC 1.1 - Bước 1.1.1: Người chơi chọn nút bắt đầu game (START) từ Menu chính
+		 */
 		startBtn = createButton("START", onStart);
 		leaderboardBtn = createButton("LEADERBOARD", onLeaderboard);
 		settingBtn = createSettingButton();
@@ -127,7 +135,7 @@ public class MainMenuPanel extends JPanel {
 			boolean isDark = ThemeManager.IS_DARK_MODE;
 			Color labelColor = isDark ? new Color(240, 240, 240) : new Color(40, 40, 40);
 			Color panelBg = isDark ? new Color(45, 45, 45) : new Color(242, 244, 247);
-			
+
 			Font labelFont = new Font("Segoe UI", Font.BOLD, 12);
 
 			// 1. Tạo thanh trượt Volume cho Nhạc nền (0-100)
@@ -149,17 +157,15 @@ public class MainMenuPanel extends JPanel {
 			darkModeCheck.setFont(labelFont);
 			darkModeCheck.setFocusPainted(false);
 
-			// NÂNG CẤP: Nội dung hướng dẫn chi tiết, định dạng đẹp mắt theo khối văn bản phẳng
+			// NÂNG CẤP: Nội dung hướng dẫn chi tiết, định dạng đẹp mắt theo khối văn bản
+			// phẳng
 			JTextArea guide = new JTextArea(
-					"HƯỚNG DẪN CHƠI GAME\n" +
-					"_______________________________________________\n" +
-					"• Di chuyển: Sử dụng phím mũi tên ◄ hoặc ►\n" +
-					"• Mục tiêu : Hứng các quả trứng rơi xuống để tính điểm\n" +
-					"• Sống sót : Tránh né các quả Bom, nổ sẽ bị trừ mạng\n\n" +
-					"PHÍM CHỨC NĂNG\n" +
-					"_______________________________________________\n" +
-					"• [ P ] - Tạm dừng game (Pause)\n" +
-					"• [ R ] - Chơi lại từ đầu (Restart)");
+					"HƯỚNG DẪN CHƠI GAME\n" + "_______________________________________________\n"
+							+ "• Di chuyển: Sử dụng phím mũi tên ◄ hoặc ►\n"
+							+ "• Mục tiêu : Hứng các quả trứng rơi xuống để tính điểm\n"
+							+ "• Sống sót : Tránh né các quả Bom, nổ sẽ bị trừ mạng\n\n" + "PHÍM CHỨC NĂNG\n"
+							+ "_______________________________________________\n" + "• [ P ] - Tạm dừng game (Pause)\n"
+							+ "• [ R ] - Chơi lại từ đầu (Restart)");
 			guide.setEditable(false);
 			guide.setFont(new Font("Segoe UI", Font.PLAIN, 12));
 			guide.setMargin(new Insets(12, 12, 12, 12)); // Tạo khoảng trống lề trong văn bản
@@ -167,7 +173,8 @@ public class MainMenuPanel extends JPanel {
 			guide.setForeground(labelColor);
 
 			JScrollPane guideScroll = new JScrollPane(guide);
-			guideScroll.setBorder(BorderFactory.createLineBorder(isDark ? new Color(70, 70, 70) : new Color(210, 215, 222), 1, true));
+			guideScroll.setBorder(
+					BorderFactory.createLineBorder(isDark ? new Color(70, 70, 70) : new Color(210, 215, 222), 1, true));
 			guideScroll.setPreferredSize(new Dimension(350, 200)); // Tăng chiều cao để hiện đủ thông tin
 
 			JPanel panel = new JPanel();
@@ -180,16 +187,16 @@ public class MainMenuPanel extends JPanel {
 			panel.add(lblMusic);
 			panel.add(musicSlider);
 			panel.add(Box.createVerticalStrut(12));
-			
+
 			JLabel lblSfx = new JLabel("Sound Effects Volume:");
 			lblSfx.setFont(labelFont);
 			panel.add(lblSfx);
 			panel.add(sfxSlider);
 			panel.add(Box.createVerticalStrut(12));
-			
+
 			panel.add(darkModeCheck);
 			panel.add(Box.createVerticalStrut(18));
-			
+
 			JLabel lblGuide = new JLabel("Luật chơi:");
 			lblGuide.setFont(labelFont);
 			panel.add(lblGuide);
@@ -210,8 +217,7 @@ public class MainMenuPanel extends JPanel {
 				SoundManager.updateMusicVolume();
 
 				// Đồng bộ và chuyển đổi giao diện Dark Mode lập tức
-				ThemeManager.IS_DARK_MODE = darkModeCheck.isSelected();
-				updateComponentColors();
+				ThemeManager.setDarkMode(darkModeCheck.isSelected());				updateComponentColors();
 			}
 			// [3.2.1 else] Nhánh Hủy cài đặt tự động kích hoạt nếu bấm Cancel hoặc dấu X
 		});
@@ -221,16 +227,19 @@ public class MainMenuPanel extends JPanel {
 
 	@Override
 	protected void paintComponent(Graphics g) {
-		super.paintComponent(g);
-		Graphics2D g2 = (Graphics2D) g;
-		int w = getWidth();
-		int h = getHeight();
+	    super.paintComponent(g);
 
-		g2.setPaint(new GradientPaint(0, 0, ThemeManager.getBgStart(), 0, h, ThemeManager.getBgEnd()));
-		g2.fillRect(0, 0, w, h);
+	    Graphics2D g2 = (Graphics2D) g;
 
-		g2.setColor(ThemeManager.getDecorationColor());
-		g2.fillOval(-80, -80, 200, 200);
-		g2.fillOval(w - 150, h - 150, 220, 220);
+	    g2.setPaint(new GradientPaint(
+	            0, 0, ThemeManager.getBgStart(),
+	            0, getHeight(), ThemeManager.getBgEnd()
+	    ));
+
+	    g2.fillRect(0, 0, getWidth(), getHeight());
+
+	    g2.setColor(ThemeManager.getDecorationColor());
+	    g2.fillOval(-80, -80, 200, 200);
+	    g2.fillOval(getWidth() - 150, getHeight() - 150, 220, 220);
 	}
 }

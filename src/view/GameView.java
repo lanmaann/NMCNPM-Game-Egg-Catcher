@@ -50,6 +50,10 @@ public class GameView extends JPanel {
         this.onHome = onHome;
         this.onRecords = onRecords;
 
+        ThemeManager.addListener(() -> {
+            repaint();
+        });
+        
         setBackground(new Color(245, 248, 255));
         setFocusable(true);
 
@@ -158,34 +162,43 @@ public class GameView extends JPanel {
     // =========================================================
     // PAINT
     // =========================================================
-    @Override
-    protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
+	@Override
+	protected void paintComponent(Graphics g) {
+	    super.paintComponent(g);
 
-        model.setScreenHeight(getHeight());
+	    model.setScreenHeight(getHeight());
 
-        drawBackground(g);
-        drawLane(g);
-        drawObjects(g);
-        drawPlayer(g);
-        drawHUD(g);
+	    Graphics2D g2 = (Graphics2D) g.create();
 
-        drawTopButtons(g);
+	    try {
+	        drawBackground(g2);
+	        drawLane(g2);
+	        drawObjects(g2);
+	        drawPlayer(g2);
 
-        if (model.isPaused()) drawPauseScreen(g);
-        if (model.isGameOver()) drawGameOver(g);
-    }
+	        drawHUD(g2);
+	        drawTopButtons(g2);
+
+	        if (model.isPaused()) {
+	            drawPauseScreen(g2);
+	        } else if (model.isGameOver()) {
+	            drawGameOver(g2);
+	        }
+
+	    } finally {
+	        g2.dispose();
+	    }
+	}
 
     // =========================================================
     // BACKGROUND
     // =========================================================
     private void drawBackground(Graphics g) {
-
         Graphics2D g2 = (Graphics2D) g;
 
         g2.setPaint(new GradientPaint(
-                0, 0, new Color(245, 248, 255),
-                0, getHeight(), new Color(190, 210, 255)
+                0, 0, ThemeManager.getBgStart(),
+                0, getHeight(), ThemeManager.getBgEnd()
         ));
 
         g2.fillRect(0, 0, getWidth(), getHeight());
@@ -223,7 +236,11 @@ public class GameView extends JPanel {
         pauseBtn = new Rectangle(px, py, size, size);
 
         // Đổi màu nút tạm dừng dựa trên trạng thái hover và giao diện tối/sáng
-        g2.setColor(hoverPause ? new Color(200, 200, 200, 230) : (ThemeManager.IS_DARK_MODE ? new Color(60, 60, 70, 220) : new Color(255, 255, 255, 220)));
+        g2.setColor(hoverPause
+                ? new Color(200, 200, 200, 230)
+                : (ThemeManager.IS_DARK_MODE
+                    ? new Color(60, 60, 70, 220)
+                    : new Color(255, 255, 255, 220)));
         g2.fillOval(px, py, size, size);
 
         g2.setColor(ThemeManager.getTextColor());
@@ -257,10 +274,12 @@ public class GameView extends JPanel {
 
         int w = getWidth();
 
-        g2.setColor(new Color(255, 255, 255, 220));
+        g2.setColor(ThemeManager.IS_DARK_MODE
+                ? new Color(40, 40, 50, 220)
+                : new Color(255, 255, 255, 220));
         g2.fillRoundRect(10, 10, w - 20, 60, 18, 18);
 
-        g2.setColor(Color.BLACK);
+        g2.setColor(ThemeManager.getTextColor());
         g2.setFont(new Font("Arial", Font.BOLD, 13));
 
         int time = model.getTimeSurvived();
@@ -462,7 +481,7 @@ public class GameView extends JPanel {
             SoundManager.updateMusicVolume();
 
             // Cập nhật cấu hình Dark Mode
-            ThemeManager.IS_DARK_MODE = darkModeCheck.isSelected();
+            ThemeManager.setDarkMode(darkModeCheck.isSelected());
             
             // [3.1.4 alt] Vẽ lại toàn bộ màn hình để áp màu sắc giao diện mới            
             repaint();

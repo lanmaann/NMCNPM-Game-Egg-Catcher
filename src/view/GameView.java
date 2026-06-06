@@ -369,39 +369,81 @@ public class GameView extends JPanel {
      * Triển khai xuất hộp thoại cấu hình nâng cao tích hợp Volume Sliders và Dark Mode Switch.
      */
     private void showEmbeddedSettingsDialog() {
+        // Lấy bảng màu hiện hành từ ThemeManager để đồng bộ UI của Dialog tương tự Menu chính
+        boolean isDark = ThemeManager.IS_DARK_MODE;
+        Color labelColor = isDark ? new Color(240, 240, 240) : new Color(40, 40, 40);
+        Color panelBg = isDark ? new Color(45, 45, 45) : new Color(242, 244, 247);
+        
+        Font labelFont = new Font("Segoe UI", Font.BOLD, 12);
+        Dimension sliderSize = new Dimension(420, 50); // Thiết lập kích thước lớn cho thanh trượt
+
         // Tạo thanh trượt Volume cho Nhạc nền
         JSlider musicSlider = new JSlider(JSlider.HORIZONTAL, 0, 100, SoundManager.MUSIC_VOLUME);
         musicSlider.setMajorTickSpacing(25);
         musicSlider.setPaintTicks(true);
         musicSlider.setPaintLabels(true);
+        musicSlider.setFont(new Font("Segoe UI", Font.PLAIN, 10));
+        musicSlider.setPreferredSize(sliderSize); // Ép thanh trượt dãn rộng ra
 
         // Tạo thanh trượt Volume cho Hiệu ứng âm thanh (SFX)
         JSlider sfxSlider = new JSlider(JSlider.HORIZONTAL, 0, 100, SoundManager.SOUND_VOLUME);
         sfxSlider.setMajorTickSpacing(25);
         sfxSlider.setPaintTicks(true);
         sfxSlider.setPaintLabels(true);
+        sfxSlider.setFont(new Font("Segoe UI", Font.PLAIN, 10));
+        sfxSlider.setPreferredSize(sliderSize); // Ép thanh trượt dãn rộng ra
 
         // Tạo Checkbox tùy chọn giao diện tối
-        JCheckBox darkModeCheck = new JCheckBox("Enable Dark Mode", ThemeManager.IS_DARK_MODE);
+        JCheckBox darkModeCheck = new JCheckBox(" Enable Dark Mode", ThemeManager.IS_DARK_MODE);
+        darkModeCheck.setFont(labelFont);
+        darkModeCheck.setFocusPainted(false);
 
-        JTextArea guide = new JTextArea("HOW TO PLAY\n\n← → : Move Basket\nCatch eggs, avoid bombs.\nP : Pause Game | R : Restart Match");
+        // NÂNG CẤP: Nội dung hướng dẫn chi tiết, định dạng đẹp mắt theo khối văn bản phẳng rộng rãi
+        JTextArea guide = new JTextArea(
+        				"HƯỚNG DẪN CHƠI GAME\n" +
+    					"_______________________________________________\n" +
+    					"• Di chuyển: Sử dụng phím mũi tên ◄ hoặc ►\n" +
+    					"• Mục tiêu : Hứng các quả trứng rơi xuống để tính điểm\n" +
+    					"• Sống sót : Tránh né các quả Bom, nổ sẽ bị trừ mạng\n\n" +
+    					"PHÍM CHỨC NĂNG\n" +
+    					"_______________________________________________\n" +
+    					"• [ P ] - Tạm dừng game (Pause)\n" +
+    					"• [ R ] - Chơi lại từ đầu (Restart)");
         guide.setEditable(false);
-        guide.setFont(new Font("Arial", Font.PLAIN, 12));
-        guide.setBackground(new Color(235, 235, 235));
+        guide.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        guide.setMargin(new Insets(12, 12, 12, 12)); // Tạo khoảng trống lề trong văn bản
+        guide.setBackground(panelBg);
+        guide.setForeground(labelColor);
+
+        JScrollPane guideScroll = new JScrollPane(guide);
+        guideScroll.setBorder(BorderFactory.createLineBorder(isDark ? new Color(70, 70, 70) : new Color(210, 215, 222), 1, true));
+        guideScroll.setPreferredSize(new Dimension(350, 200)); 
 
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 25, 20, 25)); // Tăng khoảng đệm bao quanh khung lớn cho thoáng
         
-        panel.add(new JLabel("Background Music Volume:"));
+        // Thêm các thành phần kèm icon và căn khoảng cách dãn rộng đồng bộ
+        JLabel lblMusic = new JLabel("Background Music Volume:");
+        lblMusic.setFont(labelFont);
+        panel.add(lblMusic);
         panel.add(musicSlider);
-        panel.add(Box.createVerticalStrut(10));
-        panel.add(new JLabel("Sound Effects Volume:"));
+        panel.add(Box.createVerticalStrut(12));
+        
+        JLabel lblSfx = new JLabel("Sound Effects Volume:");
+        lblSfx.setFont(labelFont);
+        panel.add(lblSfx);
         panel.add(sfxSlider);
-        panel.add(Box.createVerticalStrut(10));
+        panel.add(Box.createVerticalStrut(12));
+        
         panel.add(darkModeCheck);
-        panel.add(Box.createVerticalStrut(15));
-        panel.add(new JLabel("Game Control Guide:"));
-        panel.add(new JScrollPane(guide));
+        panel.add(Box.createVerticalStrut(18));
+        
+        JLabel lblGuide = new JLabel("Luật chơi:");
+        lblGuide.setFont(labelFont);
+        panel.add(lblGuide);
+        panel.add(Box.createVerticalStrut(6));
+        panel.add(guideScroll);
 
         // [3.1.2] Treo luồng dựng form lồng lên trên màn hình đồ họa gameview hiện thời
         int result = JOptionPane.showConfirmDialog(
@@ -422,10 +464,10 @@ public class GameView extends JPanel {
             // Cập nhật cấu hình Dark Mode
             ThemeManager.IS_DARK_MODE = darkModeCheck.isSelected();
             
-         // [3.1.4 alt] Vẽ lại toàn bộ màn hình để áp màu sắc giao diện mới            
+            // [3.1.4 alt] Vẽ lại toàn bộ màn hình để áp màu sắc giao diện mới            
             repaint();
         }
-     // [3.2.1 else] Nhánh hủy bỏ (Bấm Cancel hoặc dấu X) tự động đóng dialog, giữ nguyên biến tĩnh
+        // [3.2.1 else] Nhánh hủy bỏ (Bấm Cancel hoặc dấu X) tự động đóng dialog, giữ nguyên biến tĩnh
     }
 
 }

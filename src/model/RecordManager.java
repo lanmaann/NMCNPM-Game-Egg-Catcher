@@ -3,7 +3,12 @@ package model;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-
+/**
+ * ============================================================================
+ * UC 1.4: XEM BẢNG XẾP HẠNG (Lớp quản lý dữ liệu)
+ * Chịu trách nhiệm chính trong việc giao tiếp với tệp tin lưu trữ (đọc/ghi dữ liệu điểm).
+ * ============================================================================
+ */
 public class RecordManager {
 
     private static final String DIR =
@@ -50,7 +55,13 @@ public class RecordManager {
 
         File file = new File(FILE);
 
+        //UC 1.4 - Bước 1.4.2a.1 (Luồng thay thế): Hệ thống nhận diện danh sách trả về rỗng
+        //nếu không tìm thấy tệp tin lưu trữ điểm số.
+
         if (!file.exists()) return list;
+
+        //UC 1.4 - Bước 1.4.2: Hệ thống thực hiện gửi yêu cầu truy xuất dữ liệu
+        //bằng cách đọc từng dòng trong tệp tin lưu trữ (record.txt).
 
         try (BufferedReader br = new BufferedReader(
                 new InputStreamReader(
@@ -83,6 +94,13 @@ public class RecordManager {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        //UC 1.4 - Bước 1.4.2a.1 (Trường hợp file trống): Hệ thống nhận diện danh sách trả về rỗng.
+        if (list.isEmpty()) {
+            return list;
+        }
+
+        //UC 1.4 - Bước 1.4.3: Hệ thống sắp xếp danh sách điểm số theo thứ tự giảm dần.
+        //Phục vụ cho việc trích xuất Top 3 ở tầng View.
 
         list.sort((a, b) -> b.getScore() - a.getScore());
 

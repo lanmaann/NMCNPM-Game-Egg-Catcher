@@ -175,13 +175,13 @@ public class MainMenuPanel extends JPanel {
 			panel.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12)); // Thêm viền đệm xung quanh dialog
 
 			// Tạo các Label kèm icon sinh động, chỉnh màu đồng bộ
-			JLabel lblMusic = new JLabel("🎵 Background Music Volume:");
+			JLabel lblMusic = new JLabel("Background Music Volume:");
 			lblMusic.setFont(labelFont);
 			panel.add(lblMusic);
 			panel.add(musicSlider);
 			panel.add(Box.createVerticalStrut(12));
 			
-			JLabel lblSfx = new JLabel("🔊 Sound Effects Volume:");
+			JLabel lblSfx = new JLabel("Sound Effects Volume:");
 			lblSfx.setFont(labelFont);
 			panel.add(lblSfx);
 			panel.add(sfxSlider);

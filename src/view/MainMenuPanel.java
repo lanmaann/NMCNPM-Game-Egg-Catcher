@@ -112,11 +112,9 @@ public class MainMenuPanel extends JPanel {
 	}
 
 	private void handleExitRequest() {
-		int confirm = JOptionPane.showConfirmDialog(this, "Are you sure you want to exit the game?", "Confirm Exit",
-				JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
-		if (confirm == JOptionPane.YES_OPTION && onExitCallback != null) {
-			onExitCallback.run();
-		}
+	    if (onExitCallback != null) {
+	        onExitCallback.run();
+	    }
 	}
 
 	/** Tạo nút Settings mở hộp thoại nâng cấp: Slider + Dark Mode Switch */
